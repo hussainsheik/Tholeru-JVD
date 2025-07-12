@@ -4,7 +4,7 @@ let allData = [];
 async function fetchData() {
   const payload = { level: "2", id: "105" };
   try {
-    const res = await fetch("https://zeropovertyp4.ap.gov.in/zeropovertyp4_API/V1/DepartmentDrildown/GetDrildownData ", {
+    const res = await fetch("https://zeropovertyp4.ap.gov.in/zeropovertyp4_API/V1/DepartmentDrildown/GetDrildownData", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
