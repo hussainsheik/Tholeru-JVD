@@ -3,19 +3,39 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Zerop Poverty Dashboard</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap @5.3.2/dist/css/bootstrap.min.css">
+  <title>Zerop Poverty - Advanced Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap @5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css ">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body class="bg-light">
 
-<div class="container py-4">
-  <h1 class="mb-4">Zerop Poverty Dashboard</h1>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Zerop Poverty Dashboard</a>
+  </div>
+</nav>
 
-  <!-- Filter -->
-  <div class="mb-3">
-    <label for="constituencyFilter" class="form-label">Filter by Constituency</label>
-    <input type="text" id="constituencyFilter" class="form-control" placeholder="Type to filter...">
+<div class="container py-4">
+
+  <!-- Filters -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <label for="constituencyFilter" class="form-label">Search Constituency</label>
+      <input type="text" id="constituencyFilter" class="form-control" placeholder="Type to filter...">
+    </div>
+    <div class="col-md-4">
+      <label for="districtSelect" class="form-label">Select District</label>
+      <select id="districtSelect" class="form-select">
+        <option value="">All</option>
+        <option value="West Godavari">West Godavari</option>
+        <option value="East Godavari">East Godavari</option>
+      </select>
+    </div>
+    <div class="col-md-4 mt-4">
+      <button id="exportCsvBtn" class="btn btn-success">Export CSV</button>
+      <button id="refreshBtn" class="btn btn-secondary ms-2">Refresh Data</button>
+    </div>
   </div>
 
   <!-- Summary Cards -->
@@ -32,6 +52,12 @@
         <p id="totalAdopted" class="fs-4">0</p>
       </div>
     </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-info text-dark p-3">
+        <h5>% Coverage</h5>
+        <p id="coveragePercent" class="fs-4">0%</p>
+      </div>
+    </div>
   </div>
 
   <!-- Chart -->
@@ -40,8 +66,8 @@
   <!-- Data Table -->
   <h3 class="mt-5">Raw Data</h3>
   <div class="table-responsive">
-    <table id="dataTable" class="table table-striped table-bordered">
-      <thead><tr><th>Constituency</th><th>Families</th><th>Adopted</th></tr></thead>
+    <table id="dataTable" class="table table-striped table-bordered nowrap" style="width:100%">
+      <thead><tr><th>Constituency</th><th>Families</th><th>Adopted</th><th>Mandals Covered</th></tr></thead>
       <tbody></tbody>
     </table>
   </div>
@@ -49,6 +75,9 @@
 
 <!-- Scripts -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js "></script>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js "></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js "></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js "></script>
 <script src="script.js"></script>
 </body>
 </html>
