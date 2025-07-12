@@ -1,6 +1,8 @@
 body {
+  font-family: 'Segoe UI', sans-serif;
   padding-top: 20px;
 }
+
 .card {
   border-radius: 0.5rem;
 }
@@ -8,4 +10,10 @@ canvas {
   background-color: white;
   padding: 20px;
   border-radius: 10px;
+}
+.table-responsive {
+  overflow-x: auto;
+}
+.navbar {
+  border-radius: 0;
 }
