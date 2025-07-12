@@ -4,7 +4,7 @@ let allData = [];
 async function fetchData() {
   const payload = { level: "2", id: "105" };
   try {
-    const res = await fetch("https://zeropovertyp4.ap.gov.in/zeropovertyp4_API/V1/DepartmentDrildown/GetDrildownData", {
+    const res = await fetch("https://zeropovertyp4.ap.gov.in/zeropovertyp4_API/V1/DepartmentDrildown/GetDrildownData ", {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -16,7 +16,7 @@ async function fetchData() {
     allData = json.Data || [];
 
     updateDashboard(allData);
-    populateTable(allData);
+    initDataTable(allData);
 
   } catch (err) {
     console.error("Error fetching data:", err);
@@ -26,8 +26,13 @@ async function fetchData() {
 
 // Update summary cards and chart
 function updateDashboard(data) {
-  document.getElementById('totalFamilies').textContent = data.reduce((sum, d) => sum + parseInt(d.TotalFamilies), 0);
-  document.getElementById('totalAdopted').textContent = data.reduce((sum, d) => sum + parseInt(d.TotalAdopted), 0);
+  const totalFamilies = data.reduce((sum, d) => sum + parseInt(d.TotalFamilies), 0);
+  const totalAdopted = data.reduce((sum, d) => sum + parseInt(d.TotalAdopted), 0);
+  const coverage = ((totalAdopted / totalFamilies) * 100).toFixed(1) + "%";
+
+  document.getElementById('totalFamilies').textContent = totalFamilies;
+  document.getElementById('totalAdopted').textContent = totalAdopted;
+  document.getElementById('coveragePercent').textContent = coverage;
 
   const labels = data.map(d => d.ConstituencyName);
   const datasets = [
@@ -59,14 +64,20 @@ function updateDashboard(data) {
   });
 }
 
-// Populate table
-function populateTable(data) {
-  const tbody = document.querySelector("#dataTable tbody");
-  tbody.innerHTML = "";
-  data.forEach(row => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${row.ConstituencyName}</td><td>${row.TotalFamilies}</td><td>${row.TotalAdopted}</td>`;
-    tbody.appendChild(tr);
+// Initialize DataTable
+function initDataTable(data) {
+  $('#dataTable').DataTable({
+    destroy: true,
+    data: data,
+    columns: [
+      { data: 'ConstituencyName' },
+      { data: 'TotalFamilies' },
+      { data: 'TotalAdopted' },
+      { data: 'CoverdMandals' }
+    ],
+    paging: true,
+    searching: true,
+    scrollX: true
   });
 }
 
@@ -75,8 +86,28 @@ document.getElementById('constituencyFilter').addEventListener('input', function
   const filter = this.value.toLowerCase();
   const filtered = allData.filter(d => d.ConstituencyName.toLowerCase().includes(filter));
   updateDashboard(filtered);
-  populateTable(filtered);
+  initDataTable(filtered);
 });
+
+// Refresh button
+document.getElementById('refreshBtn').addEventListener('click', fetchData);
+
+// Export to CSV
+document.getElementById('exportCsvBtn').addEventListener('click', () => {
+  let csv = "Constituency,Families,Adopted,Margadarsi Mobilized\n";
+  allData.forEach(row => {
+    csv += `${row.ConstituencyName},${row.TotalFamilies},${row.TotalAdopted},${row.TotalMargadarsiMobilized}\n`;
+  });
+  downloadCSV(csv, "zeropverty_data.csv");
+});
+
+function downloadCSV(csv, filename) {
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = filename;
+  link.click();
+}
 
 // Run on load
 fetchData();
