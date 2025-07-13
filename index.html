@@ -3,333 +3,564 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Constituency Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
-    <script src="https://unpkg.com/@heroicons/react@2.0.18/outline/index.js"></script>
-    <script type="text/javascript">
-        // Load Google Charts
-        google.charts.load('current', {
-            'packages': ['corechart', 'controls', 'geochart', 'barchart']
-        });
-        google.charts.setOnLoadCallback(() => {
-            document.addEventListener('DOMContentLoaded', drawDashboard);
-        });
-
-        // Google Sheet details
-        const sheetId = '1Gd2drYqcQDF4E-XyXW7Q4ceTQ1PjCbOizkg2kTVZTvQ'; // Replace with your Google Sheet ID
-        const sheetName = 'Drilldown Data';
-        const dataSourceUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tqx=out:json`;
-
-        function drawDashboard() {
-            // Show loading spinner
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('dashboard_div').style.display = 'none';
-
-            // Query the Google Sheet
-            var query = new google.visualization.Query(dataSourceUrl);
-            query.send(handleQueryResponse);
-        }
-
-        function handleQueryResponse(response) {
-            // Hide loading spinner
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('dashboard_div').style.display = 'block';
-
-            if (response.isError()) {
-                document.getElementById('error').innerText = 'Error loading data: ' + response.getMessage() + '. Please ensure the Google Sheet is public and the ID is correct.';
-                document.getElementById('error').style.display = 'block';
-                return;
-            }
-
-            var data = response.getDataTable();
-
-            // Calculate Family Adoption Rate
-            var view = new google.visualization.DataView(data);
-            view.setColumns([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, {
-                calc: function(dt, row) {
-                    var totalFamilies = dt.getValue(row, 7);
-                    var totalAdopted = dt.getValue(row, 9);
-                    return totalFamilies > 0 ? (totalAdopted / totalFamilies * 100).toFixed(2) : 0;
-                },
-                type: 'number',
-                label: 'Family Adoption Rate (%)'
-            }]);
-
-            // Create a dashboard
-            var dashboard = new google.visualization.Dashboard(document.getElementById('dashboard_div'));
-
-            // Category filter for ConstituencyName (multi-select)
-            var categoryFilter = new google.visualization.ControlWrapper({
-                'controlType': 'CategoryFilter',
-                'containerId': 'filter_div',
-                'options': {
-                    'filterColumnLabel': 'ConstituencyName',
-                    'ui': {
-                        'label': 'Select Constituencies:',
-                        'allowTyping': true,
-                        'allowMultiple': true,
-                        'selectedValuesLayout': 'below',
-                        'caption': 'Choose constituencies...'
-                    }
-                }
-            });
-
-            // Pie chart for TotalFamilies, TotalAdopted, TotalFamiliesYetToAdopt
-            var pieChart = new google.visualization.ChartWrapper({
-                'chartType': 'PieChart',
-                'containerId': 'piechart_div',
-                'options': {
-                    'title': 'Family Adoption Breakdown',
-                    'colors': ['#3B82F6', '#14B8A6', '#EF4444'],
-                    'pieSliceText': 'percentage',
-                    'legend': { 'position': 'right', 'textStyle': { 'fontSize': 14 } },
-                    'chartArea': { 'width': '90%', 'height': '80%' },
-                    'tooltip': { 'trigger': 'focus', 'isHtml': true }
-                }
-            });
-
-            // Bar chart for TotalMandals, CoveredMandals, TotalSecretariats, CoveredSecretariates
-            var barChart = new google.visualization.ChartWrapper({
-                'chartType': 'BarChart',
-                'containerId': 'barchart_div',
-                'options': {
-                    'title': 'Mandals and Secretariats Comparison',
-                    'colors': ['#1E3A8A', '#14B8A6', '#3B82F6', '#EF4444'],
-                    'hAxis': { 'title': 'Count' },
-                    'vAxis': { 'title': 'Constituency' },
-                    'legend': { 'position': 'top' },
-                    'chartArea': { 'width': '70%', 'height': '80%' }
-                },
-                'view': {
-                    'columns': [2, 3, 4, 5, 6]
-                }
-            });
-
-            // GeoChart for constituencies (region-based)
-            var geoChart = new google.visualization.ChartWrapper({
-                'chartType': 'GeoChart',
-                'containerId': 'geochart_div',
-                'options': {
-                    'region': 'IN-AP', // Focus on Andhra Pradesh
-                    'displayMode': 'regions',
-                    'colorAxis': { 'colors': ['#14B8A6', '#1E3A8A'], 'minValue': 0, 'maxValue': 100 }, // Based on Family Adoption Rate
-                    'width': '100%',
-                    'height': 500,
-                    'tooltip': { 'isHtml': true }
-                },
-                'view': {
-                    'columns': [
-                        2, // ConstituencyName
-                        12, // Family Adoption Rate
-                        {
-                            calc: function(dt, row) {
-                                return `<b>${dt.getValue(row, 2)}</b><br>` +
-                                       `Total Families: ${dt.getValue(row, 7)}<br>` +
-                                       `Total Adopted: ${dt.getValue(row, 9)}<br>` +
-                                       `Adoption Rate: ${dt.getValue(row, 12)}%`;
-                            },
-                            type: 'string',
-                            label: 'Tooltip'
-                        }
-                    ]
-                }
-            });
-
-            // Table for key statistics
-            var table = new google.visualization.ChartWrapper({
-                'chartType': 'Table',
-                'containerId': 'table_div',
-                'options': {
-                    'width': '100%',
-                    'cssClassNames': {
-                        'headerCell': 'bg-blue-900 text-white',
-                        'tableCell': 'border border-gray-200'
-                    }
-                },
-                'view': {
-                    'columns': [2, 7, 8, 9, 10, 11, 12]
-                }
-            });
-
-            // Bind controls to charts
-            dashboard.bind(categoryFilter, [pieChart, barChart, geoChart, table]);
-
-            // Draw the dashboard
-            dashboard.draw(view);
-
-            // Update pie chart data dynamically
-            google.visualization.events.addListener(categoryFilter, 'statechange', function() {
-                var state = categoryFilter.getState();
-                var filteredView = new google.visualization.DataView(view);
-                if (state.selectedValues.length > 0) {
-                    filteredView.setRows(view.getFilteredRows([{column: 2, value: state.selectedValues}]));
-                }
-                var pieData = new google.visualization.DataTable();
-                pieData.addColumn('string', 'Category');
-                pieData.addColumn('number', 'Value');
-                var totalFamilies = 0, totalAdopted = 0, totalYetToAdopt = 0;
-                for (var i = 0; i < filteredView.getNumberOfRows(); i++) {
-                    totalFamilies += filteredView.getValue(i, 7);
-                    totalAdopted += filteredView.getValue(i, 9);
-                    totalYetToAdopt += filteredView.getValue(i, 10);
-                }
-                pieData.addRow(['Total Families', totalFamilies]);
-                pieData.addRow(['Total Adopted', totalAdopted]);
-                pieData.addRow(['Total Families Yet to Adopt', totalYetToAdopt]);
-                pieChart.setDataTable(pieData);
-                pieChart.draw();
-            });
-
-            // Update key statistics cards
-            updateStatsCards(view);
-            google.visualization.events.addListener(categoryFilter, 'statechange', function() {
-                var state = categoryFilter.getState();
-                var filteredView = new google.visualization.DataView(view);
-                if (state.selectedValues.length > 0) {
-                    filteredView.setRows(view.getFilteredRows([{column: 2, value: state.selectedValues}]));
-                }
-                updateStatsCards(filteredView);
-            });
-        }
-
-        function updateStatsCards(view) {
-            var totalFamilies = 0, totalMembers = 0, totalAdopted = 0, totalYetToAdopt = 0, totalMargadarsi = 0, totalAdoptionRate = 0;
-            var rowCount = view.getNumberOfRows();
-            for (var i = 0; i < rowCount; i++) {
-                totalFamilies += view.getValue(i, 7);
-                totalMembers += view.getValue(i, 8);
-                totalAdopted += view.getValue(i, 9);
-                totalYetToAdopt += view.getValue(i, 10);
-                totalMargadarsi += view.getValue(i, 11);
-                totalAdoptionRate += parseFloat(view.getValue(i, 12));
-            }
-            totalAdoptionRate = rowCount > 0 ? (totalAdoptionRate / rowCount).toFixed(2) : 0;
-
-            document.getElementById('stat-families').innerText = totalFamilies.toLocaleString();
-            document.getElementById('stat-members').innerText = totalMembers.toLocaleString();
-            document.getElementById('stat-adopted').innerText = totalAdopted.toLocaleString();
-            document.getElementById('stat-yettoadopt').innerText = totalYetToAdopt.toLocaleString();
-            document.getElementById('stat-margadarsi').innerText = totalMargadarsi.toLocaleString();
-            document.getElementById('stat-adoptionrate').innerText = totalAdoptionRate + '%';
-        }
-    </script>
+    <title>Constituency Data Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --accent: #4895ef;
+            --dark: #1b263b;
+            --light: #f8f9fa;
+            --success: #4cc9f0;
+            --warning: #f72585;
+            --info: #560bad;
+        }
+        
         body {
-            background: linear-gradient(to bottom, #F3F4F6, #E5E7EB);
-            font-family: 'Arial', sans-serif;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f7fa;
+            color: #333;
         }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1.5rem 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 2.2rem;
+        }
+        
+        .subtitle {
+            font-weight: 300;
+            opacity: 0.9;
+            margin-top: 0.5rem;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+        }
+        
         .card {
-            background-color: #FFFFFF;
-            border-radius: 0.75rem;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            padding: 2rem;
-            transition: transform 0.3s ease;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
+        
         .card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
         }
-        .stat-card {
-            background: linear-gradient(135deg, #3B82F6, #1E3A8A);
-            color: white;
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-        }
-        #loading {
+        
+        .card-header {
             display: flex;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
-            height: 100px;
+            margin-bottom: 1rem;
         }
-        #error {
-            display: none;
-            color: #EF4444;
-            text-align: center;
-            margin: 1rem 0;
+        
+        .card-title {
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 1.1rem;
+            margin: 0;
+        }
+        
+        .map-container {
+            grid-column: span 8;
+            height: 500px;
+        }
+        
+        .summary-stats {
+            grid-column: span 4;
+        }
+        
+        .chart-container {
+            grid-column: span 6;
+            height: 350px;
+            position: relative;
+        }
+        
+        .chart {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .data-table {
+            grid-column: span 12;
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 500;
+        }
+        
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        
+        tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .stat-card {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .progress-container {
+            width: 100%;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, var(--accent), var(--success));
+        }
+        
+        .filter-controls {
+            grid-column: span 12;
+            display: flex;
+            gap: 15px;
+            margin-bottom: 1rem;
+        }
+        
+        select {
+            padding: 10px 15px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            background-color: white;
+            font-family: 'Inter', sans-serif;
+            min-width: 200px;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+        
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+            margin-right: 5px;
+        }
+        
+        @media (max-width: 1200px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .map-container, .summary-stats, .chart-container {
+                grid-column: span 1;
+            }
         }
     </style>
 </head>
-<body class="min-h-screen">
-    <div class="container mx-auto p-6">
-        <h1 class="text-4xl font-bold text-blue-900 mb-8 text-center">Advanced Constituency Adoption Dashboard</h1>
-        <div id="loading">
-            <svg class="animate-spin h-10 w-10 text-blue-900" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
+<body>
+    <div class="container">
+        <header>
+            <h1>Constituency Data Dashboard</h1>
+            <div class="subtitle">Interactive visualization of family adoption and coverage metrics</div>
+        </header>
+        
+        <div class="filter-controls">
+            <select id="constituencyFilter">
+                <option value="">All Constituencies</option>
+            </select>
         </div>
-        <div id="error"></div>
-        <div id="dashboard_div" style="display: none;">
-            <div class="mb-6 card">
-                <h2 class="text-xl font-semibold text-blue-900 mb-4">Filter Constituencies</h2>
-                <div id="filter_div" class="border border-gray-300 rounded p-2 w-full"></div>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-                <div class="stat-card flex items-center space-x-4">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    <div>
-                        <h3 class="text-lg font-semibold">Total Families</h3>
-                        <p id="stat-families" class="text-2xl font-bold">0</p>
-                    </div>
+        
+        <div class="dashboard-grid">
+            <div class="card map-container">
+                <div class="card-header">
+                    <h2 class="card-title">Geographical Coverage</h2>
                 </div>
-                <div class="stat-card flex items-center space-x-4">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7v-2a3 3 0 005.356-1.857M17 20v2m-10 0v-2m-3-2h3m-3 0H2v2h3m0 0v2m10-8a2 2 0 100-4 2 2 0 000 4z"></path></svg>
-                    <div>
-                        <h3 class="text-lg font-semibold">Total Family Members</h3>
-                        <p id="stat-members" class="text-2xl font-bold">0</p>
+                <div id="map" style="height: 100%; border-radius: 8px;"></div>
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #4cc9f0;"></div>
+                        <span>High Adoption</span>
                     </div>
-                </div>
-                <div class="stat-card flex items-center space-x-4">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                    <div>
-                        <h3 class="text-lg font-semibold">Total Adopted</h3>
-                        <p id="stat-adopted" class="text-2xl font-bold">0</p>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #4895ef;"></div>
+                        <span>Medium Adoption</span>
                     </div>
-                </div>
-                <div class="stat-card flex items-center space-x-4">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    <div>
-                        <h3 class="text-lg font-semibold">Total Families Yet to Adopt</h3>
-                        <p id="stat-yettoadopt" class="text-2xl font-bold">0</p>
-                    </div>
-                </div>
-                <div class="stat-card flex items-center space-x-4">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"></path></svg>
-                    <div>
-                        <h3 class="text-lg font-semibold">Total Margadarsi Mobilized</h3>
-                        <p id="stat-margadarsi" class="text-2xl font-bold">0</p>
-                    </div>
-                </div>
-                <div class="stat-card flex items-center space-x-4">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    <div>
-                        <h3 class="text-lg font-semibold">Family Adoption Rate</h3>
-                        <p id="stat-adoptionrate" class="text-2xl font-bold">0%</p>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #4361ee;"></div>
+                        <span>Low Adoption</span>
                     </div>
                 </div>
             </div>
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="card">
-                    <h2 class="text-xl font-semibold text-blue-900 mb-4">Family Adoption Breakdown</h2>
-                    <div id="piechart_div" style="height: 400px;"></div>
+            
+            <div class="card summary-stats">
+                <div class="card-header">
+                    <h2 class="card-title">Family Adoption Statistics</h2>
                 </div>
-                <div class="card">
-                    <h2 class="text-xl font-semibold text-blue-900 mb-4">Mandals and Secretariats</h2>
-                    <div id="barchart_div" style="height: 400px;"></div>
+                <div class="stat-card">
+                    <span class="stat-value" id="totalFamilies">0</span>
+                    <span class="stat-label">Total Families</span>
                 </div>
-                <div class="card lg:col-span-2">
-                    <h2 class="text-xl font-semibold text-blue-900 mb-4">Geographical Distribution</h2>
-                    <div id="geochart_div" style="height: 500px;"></div>
+                <div class="stat-card">
+                    <span class="stat-value" id="totalFamilyMembers">0</span>
+                    <span class="stat-label">Total Family Members</span>
                 </div>
-                <div class="card lg:col-span-2">
-                    <h2 class="text-xl font-semibold text-blue-900 mb-4">Detailed Statistics</h2>
-                    <div id="table_div"></div>
+                <div class="stat-card">
+                    <span class="stat-value" id="totalAdopted">0</span>
+                    <span class="stat-label">Adopted Families</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="familiesYetToAdopt">0</span>
+                    <span class="stat-label">Families Yet to Adopt</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="totalMargadarsi">0</span>
+                    <span class="stat-label">Margadarsi Mobilized</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="adoptionRate">0%</span>
+                    <span class="stat-label">Family Adoption Rate</span>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="adoptionProgress" style="width: 0%"></div>
+                    </div>
                 </div>
             </div>
-            <div class="mt-6 text-center text-gray-600">
-                <p>Data sourced from: <a href="https://docs.google.com/spreadsheets/d/YOUR_GOOGLE_SHEET_ID" target="_blank" class="text-blue-600 hover:underline">Google Sheet</a></p>
+            
+            <div class="card chart-container">
+                <div class="card-header">
+                    <h2 class="card-title">Family Adoption Status</h2>
+                </div>
+                <div id="adoptionPieChart" class="chart"></div>
+            </div>
+            
+            <div class="card chart-container">
+                <div class="card-header">
+                    <h2 class="card-title">Margadarsi Mobilization</h2>
+                </div>
+                <div id="margadarsiChart" class="chart"></div>
+            </div>
+            
+            <div class="card data-table">
+                <div class="card-header">
+                    <h2 class="card-title">Detailed Constituency Data</h2>
+                </div>
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>Constituency Name</th>
+                            <th>Total Families</th>
+                            <th>Family Members</th>
+                            <th>Adopted Families</th>
+                            <th>Families Yet to Adopt</th>
+                            <th>Margadarsi Mobilized</th>
+                            <th>Adoption Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
     </div>
-</body>
-</html>
+
+    <script>
+        // Configuration
+        const googleSheetId = '1Gd2drYqcQDF4E-XyXW7Q4ceTQ1PjCbOizkg2kTVZTvQ'; // Replace with your Google Sheet ID
+        const sheetName = 'Drilldown Data'; // Replace with your sheet name
+        const sheetUrl = `https://docs.google.com/spreadsheets/d/${googleSheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
+        
+        // Coordinates for the constituencies (you'll need to replace these with actual coordinates)
+        const constituencyCoordinates = {
+            "Achanta": { lat: 16.5833, lng: 81.7833 },
+            "Bhimavaram": { lat: 16.5408, lng: 81.5239 },
+            "Narasapuram": { lat: 16.4333, lng: 81.6833 },
+            "Palacole": { lat: 16.5333, lng: 81.7333 },
+            "Tadepalligudem": { lat: 16.8333, lng: 81.5000 },
+            "Tanuku": { lat: 16.7500, lng: 81.7000 },
+            "Undi": { lat: 16.6167, lng: 81.6167 },
+            "Ungutur": { lat: 16.7000, lng: 81.4667 }
+        };
+        
+        // Initialize map
+        const map = L.map('map').setView([16.5, 81.0], 8);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        
+        // Chart instances
+        let adoptionPieChart;
+        let margadarsiChart;
+        
+        // Fetch data from Google Sheets
+        async function fetchData() {
+            try {
+                const response = await fetch(sheetUrl);
+                const csvData = await response.text();
+                const data = parseCSV(csvData);
+                processData(data);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        }
+        
+        // Parse CSV data
+        function parseCSV(csv) {
+            const lines = csv.split('\n');
+            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+            const result = [];
+            
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i]) continue;
+                const obj = {};
+                const currentline = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                
+                for (let j = 0; j < headers.length; j++) {
+                    let value = currentline[j] ? currentline[j].trim().replace(/"/g, '') : '';
+                    // Convert numeric values
+                    if (!isNaN(value) && value !== '') {
+                        value = Number(value);
+                    }
+                    obj[headers[j]] = value;
+                }
+                result.push(obj);
+            }
+            
+            return result;
+        }
+        
+        // Process and visualize data
+        function processData(data) {
+            if (!data || data.length === 0) return;
+            
+            // Update filters
+            updateFilters(data);
+            
+            // Calculate summary statistics
+            calculateSummary(data);
+            
+            // Render charts
+            renderCharts(data);
+            
+            // Render table
+            renderTable(data);
+            
+            // Render map
+            renderMap(data);
+        }
+        
+        // Update filter dropdowns
+        function updateFilters(data) {
+            const constituencyFilter = document.getElementById('constituencyFilter');
+            
+            // Get unique constituencies
+            const constituencies = [...new Set(data.map(item => item.ConstituencyName))];
+            
+            // Clear existing options except the first one
+            while (constituencyFilter.options.length > 1) {
+                constituencyFilter.remove(1);
+            }
+            
+            // Populate constituency filter
+            constituencies.forEach(constituency => {
+                const option = document.createElement('option');
+                option.value = constituency;
+                option.textContent = constituency;
+                constituencyFilter.appendChild(option);
+            });
+            
+            // Add event listener for filtering
+            constituencyFilter.addEventListener('change', () => filterData(data));
+        }
+        
+        // Filter data based on selections
+        function filterData(data) {
+            const constituencyFilter = document.getElementById('constituencyFilter').value;
+            
+            let filteredData = [...data];
+            
+            if (constituencyFilter) {
+                filteredData = filteredData.filter(item => item.ConstituencyName === constituencyFilter);
+            }
+            
+            // Re-render visualizations with filtered data
+            calculateSummary(filteredData);
+            renderCharts(filteredData);
+            renderTable(filteredData);
+            renderMap(filteredData);
+        }
+        
+        // Calculate and display summary statistics
+        function calculateSummary(data) {
+            const totalFamilies = data.reduce((sum, item) => sum + (item.TotalFamilies || 0), 0);
+            const totalFamilyMembers = data.reduce((sum, item) => sum + (item.TotalFamilyMembers || 0), 0);
+            const totalAdopted = data.reduce((sum, item) => sum + (item.TotalAdopted || 0), 0);
+            const familiesYetToAdopt = data.reduce((sum, item) => sum + (item.TotalFamiliesYetToAdopt || 0), 0);
+            const totalMargadarsi = data.reduce((sum, item) => sum + (item.TotalMargadarsiMobilized || 0), 0);
+            
+            // Update DOM elements
+            document.getElementById('totalFamilies').textContent = totalFamilies.toLocaleString();
+            document.getElementById('totalFamilyMembers').textContent = totalFamilyMembers.toLocaleString();
+            document.getElementById('totalAdopted').textContent = totalAdopted.toLocaleString();
+            document.getElementById('familiesYetToAdopt').textContent = familiesYetToAdopt.toLocaleString();
+            document.getElementById('totalMargadarsi').textContent = totalMargadarsi.toLocaleString();
+            
+            // Calculate adoption rate
+            const adoptionRate = totalFamilies > 0 ? (totalAdopted / totalFamilies) * 100 : 0;
+            document.getElementById('adoptionRate').textContent = `${adoptionRate.toFixed(1)}%`;
+            document.getElementById('adoptionProgress').style.width = `${adoptionRate}%`;
+        }
+        
+        // Render charts
+        function renderCharts(data) {
+            // Destroy existing charts if they exist
+            if (adoptionPieChart) {
+                adoptionPieChart.destroy();
+            }
+            if (margadarsiChart) {
+                margadarsiChart.destroy();
+            }
+            
+            // Prepare data for charts
+            const constituencies = data.map(item => item.ConstituencyName);
+            
+            // Family Adoption Pie Chart
+            adoptionPieChart = new ApexCharts(document.querySelector("#adoptionPieChart"), {
+                series: [
+                    data.reduce((sum, item) => sum + (item.TotalAdopted || 0), 0),
+                    data.reduce((sum, item) => sum + (item.TotalFamiliesYetToAdopt || 0), 0)
+                ],
+                chart: {
+                    type: 'donut',
+                    height: 350
+                },
+                labels: ['Adopted Families', 'Families Yet to Adopt'],
+                colors: ['#4cc9f0', '#4361ee'],
+                responsive: [{
+                    breakpoint: 480,
+                    options: {
+                        chart: {
+                            width: 200
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }],
+                legend: {
+                    position: 'right'
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'Total Families',
+                                    formatter: function (w) {
+                                        return w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            adoptionPieChart.render();
+            
+            // Margadarsi Mobilization Chart
+            margadarsiChart = new ApexCharts(document.querySelector("#margadarsiChart"), {
+                series: [{
+                    name: 'Margadarsi Mobilized',
+                    data: data.map(item => item.TotalMargadarsiMobilized || 0)
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    toolbar: {
+                        show: true
+                    }
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 4,
+                        horizontal: true,
+                    }
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                colors: ['#560bad'],
+                xaxis: {
+                    categories: constituencies,
+                    labels: {
+                        style: {
+                            fontSize: '12px'
+                        }
+                    }
+                },
+                yaxis: {
+                    title: {
+                        text: 'Constituencies'
+                    }
+                },
+                tooltip: {
+                    y: {
+                        formatter: functi
