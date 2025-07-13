@@ -1,83 +1,1144 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Zerop Poverty - Advanced Dashboard</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap @5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css ">
-  <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AP Constituency Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        .dashboard-header {
+            background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: transform 0.3s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            font-weight: 600;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        #map {
+            height: 400px;
+            border-radius: 10px;
+            z-index: 1;
+        }
+        .data-table {
+            font-size: 0.9rem;
+        }
+        .data-table th {
+            background-color: #f8f9fa;
+            position: sticky;
+            top: 0;
+        }
+        .comparison-chart {
+            height: 350px;
+        }
+        .kpi-card {
+            text-align: center;
+            padding: 15px;
+        }
+        .kpi-value {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        .kpi-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+        }
+        .positive {
+            color: #198754;
+        }
+        .negative {
+            color: #dc3545;
+        }
+        .neutral {
+            color: #0d6efd;
+        }
+        .constituency-selector {
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 15px;
+            z-index: 1000;
+        }
+        .tab-content {
+            padding: 15px 0;
+        }
+        .progress {
+            height: 25px;
+            border-radius: 5px;
+        }
+        .progress-bar {
+            background-color: #0d6efd;
+        }
+        .legend {
+            font-size: 0.8rem;
+            padding: 5px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        .tooltip-inner {
+            max-width: 300px;
+        }
+        .loading-spinner {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+    </style>
 </head>
-<body class="bg-light">
-
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
-  <div class="container-fluid">
-    <a class="navbar-brand" href="#">Zerop Poverty Dashboard</a>
-  </div>
-</nav>
-
-<div class="container py-4">
-
-  <!-- Filters -->
-  <div class="row mb-4">
-    <div class="col-md-4">
-      <label for="constituencyFilter" class="form-label">Search Constituency</label>
-      <input type="text" id="constituencyFilter" class="form-control" placeholder="Type to filter...">
+<body>
+    <div class="loading-spinner" id="loadingSpinner">
+        <div class="spinner-border text-light" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
     </div>
-    <div class="col-md-4">
-      <label for="districtSelect" class="form-label">Select District</label>
-      <select id="districtSelect" class="form-select">
-        <option value="">All</option>
-        <option value="West Godavari">West Godavari</option>
-        <option value="East Godavari">East Godavari</option>
-      </select>
-    </div>
-    <div class="col-md-4 mt-4">
-      <button id="exportCsvBtn" class="btn btn-success">Export CSV</button>
-      <button id="refreshBtn" class="btn btn-secondary ms-2">Refresh Data</button>
-    </div>
-  </div>
 
-  <!-- Summary Cards -->
-  <div class="row g-3 mb-4">
-    <div class="col-md-3">
-      <div class="card text-white bg-primary p-3">
-        <h5>Total Families</h5>
-        <p id="totalFamilies" class="fs-4">0</p>
-      </div>
+    <div class="dashboard-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="bi bi-bar-chart-line"></i> Andhra Pradesh Constituency Dashboard</h1>
+                    <p class="lead">Interactive visualization and comparison of constituency data</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <button class="btn btn-light me-2" id="exportPdf"><i class="bi bi-file-earmark-pdf"></i> Export PDF</button>
+                    <button class="btn btn-light" id="exportData"><i class="bi bi-download"></i> Export Data</button>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="col-md-3">
-      <div class="card text-white bg-success p-3">
-        <h5>Adopted Families</h5>
-        <p id="totalAdopted" class="fs-4">0</p>
-      </div>
+
+    <div class="container">
+        <div class="constituency-selector mb-4">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="constituencySelect" class="form-label">Select Constituency</label>
+                    <select class="form-select" id="constituencySelect">
+                        <option value="all">All Constituencies</option>
+                        <!-- Options will be populated dynamically -->
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label for="metricSelect" class="form-label">Primary Metric</label>
+                    <select class="form-select" id="metricSelect">
+                        <option value="TotalFamilies">Total Families</option>
+                        <option value="TotalFamilyMembers">Family Members</option>
+                        <option value="TotalAdopted">Adopted Families</option>
+                        <option value="TotalFamiliesYetToAdopt">Families Yet to Adopt</option>
+                        <option value="CoverageRatio">Coverage Ratio</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="overview-tab" data-bs-toggle="tab" data-bs-target="#overview" type="button" role="tab">Overview</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="comparison-tab" data-bs-toggle="tab" data-bs-target="#comparison" type="button" role="tab">Comparison</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="map-tab" data-bs-toggle="tab" data-bs-target="#map-view" type="button" role="tab">Map View</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="data-tab" data-bs-toggle="tab" data-bs-target="#data-view" type="button" role="tab">Raw Data</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="dashboardTabsContent">
+            <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="card kpi-card">
+                            <div class="kpi-value" id="totalFamiliesKpi">0</div>
+                            <div class="kpi-label">Total Families</div>
+                            <small class="text-muted">Across selected constituency(s)</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card kpi-card">
+                            <div class="kpi-value" id="adoptionRateKpi">0%</div>
+                            <div class="kpi-label">Adoption Rate</div>
+                            <small class="text-muted">Families adopted</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card kpi-card">
+                            <div class="kpi-value" id="coverageRateKpi">0%</div>
+                            <div class="kpi-label">Mandals Covered</div>
+                            <small class="text-muted">Covered vs Total</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="card kpi-card">
+                            <div class="kpi-value" id="mobilizedKpi">0</div>
+                            <div class="kpi-label">Margadarsi Mobilized</div>
+                            <small class="text-muted">Total mobilized</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <span>Adoption Progress</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="stackedToggle" checked>
+                                    <label class="form-check-label" for="stackedToggle">Stacked View</label>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="adoptionChart" class="comparison-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                Coverage Distribution
+                            </div>
+                            <div class="card-body">
+                                <canvas id="coverageChart" height="350"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Mandals Coverage
+                            </div>
+                            <div class="card-body">
+                                <canvas id="mandalsChart" class="comparison-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Secretariats Coverage
+                            </div>
+                            <div class="card-body">
+                                <canvas id="secretariatsChart" class="comparison-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="comparison" role="tabpanel">
+                <div class="row mb-4">
+                    <div class="col-md-12">
+                        <div class="card">
+                            <div class="card-header">
+                                Constituency Comparison
+                            </div>
+                            <div class="card-body">
+                                <canvas id="comparisonChart" height="400"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Top Constituencies by Adoption
+                            </div>
+                            <div class="card-body">
+                                <canvas id="topAdoptionChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header">
+                                Bottom Constituencies by Pending Adoption
+                            </div>
+                            <div class="card-body">
+                                <canvas id="bottomAdoptionChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="map-view" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        Constituency Geographical Distribution
+                    </div>
+                    <div class="card-body">
+                        <div id="map"></div>
+                        <div class="legend mt-3">
+                            <strong>Legend:</strong>
+                            <span class="badge bg-primary">High Adoption</span>
+                            <span class="badge bg-info">Medium Adoption</span>
+                            <span class="badge bg-warning">Low Adoption</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="data-view" role="tabpanel">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Raw Data</span>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-secondary" id="filterData"><i class="bi bi-funnel"></i> Filter</button>
+                            <button class="btn btn-sm btn-outline-secondary" id="sortData"><i class="bi bi-arrow-down-up"></i> Sort</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover data-table" id="dataTable">
+                                <thead>
+                                    <tr>
+                                        <th>Constituency</th>
+                                        <th>Total Mandals</th>
+                                        <th>Covered Mandals</th>
+                                        <th>Total Secretariats</th>
+                                        <th>Covered Secretariats</th>
+                                        <th>Total Families</th>
+                                        <th>Family Members</th>
+                                        <th>Adopted</th>
+                                        <th>Pending</th>
+                                        <th>Mobilized</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="dataTableBody">
+                                    <!-- Data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="col-md-3">
-      <div class="card text-white bg-info text-dark p-3">
-        <h5>% Coverage</h5>
-        <p id="coveragePercent" class="fs-4">0%</p>
-      </div>
-    </div>
-  </div>
 
-  <!-- Chart -->
-  <canvas id="dashboardChart" height="100"></canvas>
+    <footer class="mt-5 py-3 bg-light">
+        <div class="container text-center">
+            <p class="text-muted mb-0">Andhra Pradesh Constituency Dashboard &copy; 2023 | Data Source: Google Sheets</p>
+        </div>
+    </footer>
 
-  <!-- Data Table -->
-  <h3 class="mt-5">Raw Data</h3>
-  <div class="table-responsive">
-    <table id="dataTable" class="table table-striped table-bordered nowrap" style="width:100%">
-      <thead><tr><th>Constituency</th><th>Families</th><th>Adopted</th><th>Mandals Covered</th></tr></thead>
-      <tbody></tbody>
-    </table>
-  </div>
-</div>
-
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js "></script>
-<script src="https://code.jquery.com/jquery-3.7.0.min.js "></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js "></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js "></script>
-<script src="script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+    <script>
+        // Configuration - Replace these with your actual Google Sheet details
+        const GOOGLE_SHEETS_ID = 'https://docs.google.com/spreadsheets/d/1Gd2drYqcQDF4E-XyXW7Q4ceTQ1PjCbOizkg2kTVZTvQ/edit?gid=293030583#gid=293030583'; // Replace with your Google Sheet ID
+        const SHEET_NAME = 'Drilldown Data'; // Replace with your sheet name
+        
+        // Global variable to store the data
+        let constituencyData = [];
+        
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            showLoadingSpinner();
+            fetchDataFromGoogleSheet().then(() => {
+                hideLoadingSpinner();
+                initializeDashboard();
+            }).catch(error => {
+                hideLoadingSpinner();
+                console.error('Error loading data:', error);
+                alert('Failed to load data from Google Sheets. Please check the console for details.');
+            });
+        });
+        
+        function showLoadingSpinner() {
+            document.getElementById('loadingSpinner').style.display = 'flex';
+        }
+        
+        function hideLoadingSpinner() {
+            document.getElementById('loadingSpinner').style.display = 'none';
+        }
+        
+        async function fetchDataFromGoogleSheet() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEETS_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
+            
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (!data.values || data.values.length === 0) {
+                    throw new Error('No data found in the sheet');
+                }
+                
+                // Extract headers (first row)
+                const headers = data.values[0];
+                
+                // Process data rows
+                constituencyData = data.values.slice(1).map(row => {
+                    const obj = {};
+                    headers.forEach((header, index) => {
+                        // Convert numeric values
+                        if (['TotalMandals', 'CoverdMandals', 'TotalSecretariats', 'CoverdSecretariates', 
+                             'TotalFamilies', 'TotalFamilyMembers', 'TotalAdopted', 'TotalFamiliesYetToAdopt', 
+                             'TotalMargadarsiMobilized'].includes(header)) {
+                            obj[header] = parseInt(row[index]) || 0;
+                        } else {
+                            obj[header] = row[index];
+                        }
+                    });
+                    return obj;
+                });
+                
+                console.log('Data loaded successfully:', constituencyData);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                throw error;
+            }
+        }
+        
+        function initializeDashboard() {
+            // Populate constituency dropdown
+            const constituencySelect = document.getElementById('constituencySelect');
+            constituencyData.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.ConstituencyName;
+                option.textContent = item.ConstituencyName;
+                constituencySelect.appendChild(option);
+            });
+            
+            // Initialize charts
+            initKPIs();
+            initAdoptionChart();
+            initCoverageChart();
+            initMandalsChart();
+            initSecretariatsChart();
+            initComparisonChart();
+            initTopBottomCharts();
+            initMap();
+            populateDataTable();
+            
+            // Set up event listeners
+            document.getElementById('constituencySelect').addEventListener('change', updateDashboard);
+            document.getElementById('metricSelect').addEventListener('change', updateDashboard);
+            document.getElementById('stackedToggle').addEventListener('change', toggleStackedView);
+            document.getElementById('exportPdf').addEventListener('click', exportToPdf);
+            document.getElementById('exportData').addEventListener('click', exportToCsv);
+        }
+        
+        function initKPIs() {
+            const totalFamilies = constituencyData.reduce((sum, item) => sum + item.TotalFamilies, 0);
+            const totalAdopted = constituencyData.reduce((sum, item) => sum + item.TotalAdopted, 0);
+            const totalMandals = constituencyData.reduce((sum, item) => sum + item.TotalMandals, 0);
+            const coveredMandals = constituencyData.reduce((sum, item) => sum + item.CoverdMandals, 0);
+            const totalMobilized = constituencyData.reduce((sum, item) => sum + item.TotalMargadarsiMobilized, 0);
+            
+            document.getElementById('totalFamiliesKpi').textContent = totalFamilies.toLocaleString();
+            document.getElementById('adoptionRateKpi').textContent = Math.round((totalAdopted / totalFamilies) * 100) + '%';
+            document.getElementById('coverageRateKpi').textContent = Math.round((coveredMandals / totalMandals) * 100) + '%';
+            document.getElementById('mobilizedKpi').textContent = totalMobilized.toLocaleString();
+        }
+        
+        function initAdoptionChart() {
+            const ctx = document.getElementById('adoptionChart').getContext('2d');
+            const labels = constituencyData.map(item => item.ConstituencyName);
+            const adoptedData = constituencyData.map(item => item.TotalAdopted);
+            const pendingData = constituencyData.map(item => item.TotalFamiliesYetToAdopt);
+            
+            window.adoptionChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Adopted Families',
+                            data: adoptedData,
+                            backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                            borderColor: 'rgba(25, 135, 84, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Pending Adoption',
+                            data: pendingData,
+                            backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            stacked: true,
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            stacked: true,
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Families'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        function initCoverageChart() {
+            const ctx = document.getElementById('coverageChart').getContext('2d');
+            const labels = constituencyData.map(item => item.ConstituencyName);
+            const coverageData = constituencyData.map(item => Math.round((item.CoverdMandals / item.TotalMandals) * 100));
+            
+            window.coverageChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: coverageData,
+                        backgroundColor: [
+                            'rgba(13, 110, 253, 0.7)',
+                            'rgba(25, 135, 84, 0.7)',
+                            'rgba(220, 53, 69, 0.7)',
+                            'rgba(255, 193, 7, 0.7)',
+                            'rgba(111, 66, 193, 0.7)',
+                            'rgba(214, 51, 132, 0.7)',
+                            'rgba(13, 202, 240, 0.7)',
+                            'rgba(32, 201, 151, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(13, 110, 253, 1)',
+                            'rgba(25, 135, 84, 1)',
+                            'rgba(220, 53, 69, 1)',
+                            'rgba(255, 193, 7, 1)',
+                            'rgba(111, 66, 193, 1)',
+                            'rgba(214, 51, 132, 1)',
+                            'rgba(13, 202, 240, 1)',
+                            'rgba(32, 201, 151, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw}% coverage`;
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Mandal Coverage Percentage',
+                            font: {
+                                size: 14
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+        
+        function initMandalsChart() {
+            const ctx = document.getElementById('mandalsChart').getContext('2d');
+            const labels = constituencyData.map(item => item.ConstituencyName);
+            const totalData = constituencyData.map(item => item.TotalMandals);
+            const coveredData = constituencyData.map(item => item.CoverdMandals);
+            
+            window.mandalsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total Mandals',
+                            data: totalData,
+                            backgroundColor: 'rgba(108, 117, 125, 0.7)',
+                            borderColor: 'rgba(108, 117, 125, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Covered Mandals',
+                            data: coveredData,
+                            backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                            borderColor: 'rgba(13, 110, 253, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Mandals'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        function initSecretariatsChart() {
+            const ctx = document.getElementById('secretariatsChart').getContext('2d');
+            const labels = constituencyData.map(item => item.ConstituencyName);
+            const totalData = constituencyData.map(item => item.TotalSecretariats);
+            const coveredData = constituencyData.map(item => item.CoverdSecretariates);
+            
+            window.secretariatsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total Secretariats',
+                            data: totalData,
+                            backgroundColor: 'rgba(108, 117, 125, 0.7)',
+                            borderColor: 'rgba(108, 117, 125, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Covered Secretariats',
+                            data: coveredData,
+                            backgroundColor: 'rgba(13, 110, 253, 0.7)',
+                            borderColor: 'rgba(13, 110, 253, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Secretariats'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+        
+        function initComparisonChart() {
+            const ctx = document.getElementById('comparisonChart').getContext('2d');
+            const labels = constituencyData.map(item => item.ConstituencyName);
+            const familiesData = constituencyData.map(item => item.TotalFamilies);
+            const membersData = constituencyData.map(item => item.TotalFamilyMembers);
+            const adoptedData = constituencyData.map(item => item.TotalAdopted);
+            const pendingData = constituencyData.map(item => item.TotalFamiliesYetToAdopt);
+            
+            window.comparisonChart = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total Families',
+                            data: familiesData,
+                            backgroundColor: 'rgba(13, 110, 253, 0.2)',
+                            borderColor: 'rgba(13, 110, 253, 1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'rgba(13, 110, 253, 1)'
+                        },
+                        {
+                            label: 'Family Members',
+                            data: membersData,
+                            backgroundColor: 'rgba(25, 135, 84, 0.2)',
+                            borderColor: 'rgba(25, 135, 84, 1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'rgba(25, 135, 84, 1)'
+                        },
+                        {
+                            label: 'Adopted Families',
+                            data: adoptedData,
+                            backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                            borderColor: 'rgba(255, 193, 7, 1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'rgba(255, 193, 7, 1)'
+                        },
+                        {
+                            label: 'Pending Adoption',
+                            data: pendingData,
+                            backgroundColor: 'rgba(220, 53, 69, 0.2)',
+                            borderColor: 'rgba(220, 53, 69, 1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: 'rgba(220, 53, 69, 1)'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: Math.max(...familiesData, ...membersData, ...adoptedData, ...pendingData) * 1.1
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        title: {
+                            display: true,
+                            text: 'Constituency Metrics Comparison',
+                            font: {
+                                size: 16
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function initTopBottomCharts() {
+            // Top constituencies by adoption rate
+            const ctxTop = document.getElementById('topAdoptionChart').getContext('2d');
+            const sortedByAdoption = [...constituencyData].sort((a, b) => 
+                (b.TotalAdopted / b.TotalFamilies) - (a.TotalAdopted / a.TotalFamilies));
+            const topLabels = sortedByAdoption.slice(0, 5).map(item => item.ConstituencyName);
+            const topData = sortedByAdoption.slice(0, 5).map(item => Math.round((item.TotalAdopted / item.TotalFamilies) * 100));
+            
+            window.topAdoptionChart = new Chart(ctxTop, {
+                type: 'bar',
+                data: {
+                    labels: topLabels,
+                    datasets: [{
+                        label: 'Adoption Rate (%)',
+                        data: topData,
+                        backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                        borderColor: 'rgba(25, 135, 84, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Adoption Rate (%)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.raw}% adopted`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        
+            // Bottom constituencies by pending adoption
+            const ctxBottom = document.getElementById('bottomAdoptionChart').getContext('2d');
+            const sortedByPending = [...constituencyData].sort((a, b) => 
+                (b.TotalFamiliesYetToAdopt / b.TotalFamilies) - (a.TotalFamiliesYetToAdopt / a.TotalFamilies));
+            const bottomLabels = sortedByPending.slice(0, 5).map(item => item.ConstituencyName);
+            const bottomData = sortedByPending.slice(0, 5).map(item => Math.round((item.TotalFamiliesYetToAdopt / item.TotalFamilies) * 100));
+            
+            window.bottomAdoptionChart = new Chart(ctxBottom, {
+                type: 'bar',
+                data: {
+                    labels: bottomLabels,
+                    datasets: [{
+                        label: 'Pending Adoption Rate (%)',
+                        data: bottomData,
+                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
+                        borderColor: 'rgba(220, 53, 69, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Pending Adoption Rate (%)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.raw}% pending`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function initMap() {
+            // Approximate coordinates for West Godavari district constituencies
+            const constituencyCoordinates = {
+                "Achanta": [16.5833, 81.3833],
+                "Bhimavaram": [16.5400, 81.5230],
+                "Narasapuram": [16.4333, 81.6833],
+                "Palacole": [16.5333, 81.7333],
+                "Tadepalligudem": [16.8333, 81.5000],
+                "Tanuku": [16.7500, 81.7000],
+                "Undi": [16.5167, 81.3000],
+                "Ungutur": [16.6167, 81.4167]
+            };
+        
+            const map = L.map('map').setView([16.6, 81.5], 10);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+        
+            // Add markers for each constituency
+            constituencyData.forEach(constituency => {
+                const adoptionRate = (constituency.TotalAdopted / constituency.TotalFamilies) * 100;
+                let markerColor;
+                
+                if (adoptionRate > 70) {
+                    markerColor = '#198754'; // Green for high adoption
+                } else if (adoptionRate > 40) {
+                    markerColor = '#0dcaf0'; // Blue for medium adoption
+                } else {
+                    markerColor = '#ffc107'; // Yellow for low adoption
+                }
+                
+                const marker = L.circleMarker(
+                    constituencyCoordinates[constituency.ConstituencyName],
+                    {
+                        radius: 10,
+                        fillColor: markerColor,
+                        color: '#000',
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.8
+                    }
+                ).addTo(map);
+                
+                marker.bindPopup(`
+                    <strong>${constituency.ConstituencyName}</strong><br>
+                    Total Families: ${constituency.TotalFamilies.toLocaleString()}<br>
+                    Adopted: ${constituency.TotalAdopted.toLocaleString()} (${Math.round(adoptionRate)}%)<br>
+                    Pending: ${constituency.TotalFamiliesYetToAdopt.toLocaleString()}<br>
+                    Mandals: ${constituency.CoverdMandals}/${constituency.TotalMandals} covered
+                `);
+            });
+        }
+        
+        function populateDataTable() {
+            const tableBody = document.getElementById('dataTableBody');
+            tableBody.innerHTML = '';
+            
+            constituencyData.forEach(item => {
+                const coverageRate = Math.round((item.CoverdMandals / item.TotalMandals) * 100);
+                const secretariatRate = Math.round((item.CoverdSecretariates / item.TotalSecretariats) * 100);
+                const adoptionRate = Math.round((item.TotalAdopted / item.TotalFamilies) * 100);
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${item.ConstituencyName}</td>
+                    <td>${item.TotalMandals}</td>
+                    <td>${item.CoverdMandals} <small class="text-muted">(${coverageRate}%)</small></td>
+                    <td>${item.TotalSecretariats}</td>
+                    <td>${item.CoverdSecretariates} <small class="text-muted">(${secretariatRate}%)</small></td>
+                    <td>${item.TotalFamilies.toLocaleString()}</td>
+                    <td>${item.TotalFamilyMembers.toLocaleString()}</td>
+                    <td>${item.TotalAdopted.toLocaleString()} <small class="text-muted">(${adoptionRate}%)</small></td>
+                    <td>${item.TotalFamiliesYetToAdopt.toLocaleString()}</td>
+                    <td>${item.TotalMargadarsiMobilized}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        function updateDashboard() {
+            const selectedConstituency = document.getElementById('constituencySelect').value;
+            const selectedMetric = document.getElementById('metricSelect').value;
+            
+            // Filter data if a specific constituency is selected
+            const filteredData = selectedConstituency === 'all' 
+                ? constituencyData 
+                : constituencyData.filter(item => item.ConstituencyName === selectedConstituency);
+            
+            // Update KPIs
+            const totalFamilies = filteredData.reduce((sum, item) => sum + item.TotalFamilies, 0);
+            const totalAdopted = filteredData.reduce((sum, item) => sum + item.TotalAdopted, 0);
+            const totalMandals = filteredData.reduce((sum, item) => sum + item.TotalMandals, 0);
+            const coveredMandals = filteredData.reduce((sum, item) => sum + item.CoverdMandals, 0);
+            const totalMobilized = filteredData.reduce((sum, item) => sum + item.TotalMargadarsiMobilized, 0);
+            
+            document.getElementById('totalFamiliesKpi').textContent = totalFamilies.toLocaleString();
+            document.getElementById('adoptionRateKpi').textContent = totalFamilies > 0 ? Math.round((totalAdopted / totalFamilies) * 100) + '%' : '0%';
+            document.getElementById('coverageRateKpi').textContent = totalMandals > 0 ? Math.round((coveredMandals / totalMandals) * 100) + '%' : '0%';
+            document.getElementById('mobilizedKpi').textContent = totalMobilized.toLocaleString();
+            
+            // Update charts with filtered data
+            updateCharts(filteredData, selectedMetric);
+        }
+        
+        function updateCharts(filteredData, metric) {
+            const labels = filteredData.map(item => item.ConstituencyName);
+            
+            // Update Adoption Chart
+            window.adoptionChart.data.labels = labels;
+            window.adoptionChart.data.datasets[0].data = filteredData.map(item => item.TotalAdopted);
+            window.adoptionChart.data.datasets[1].data = filteredData.map(item => item.TotalFamiliesYetToAdopt);
+            window.adoptionChart.update();
+            
+            // Update Coverage Chart
+            window.coverageChart.data.labels = labels;
+            window.coverageChart.data.datasets[0].data = filteredData.map(item => Math.round((item.CoverdMandals / item.TotalMandals) * 100));
+            window.coverageChart.update();
+            
+            // Update Mandals Chart
+            window.mandalsChart.data.labels = labels;
+            window.mandalsChart.data.datasets[0].data = filteredData.map(item => item.TotalMandals);
+            window.mandalsChart.data.datasets[1].data = filteredData.map(item => item.CoverdMandals);
+            window.mandalsChart.update();
+            
+            // Update Secretariats Chart
+            window.secretariatsChart.data.labels = labels;
+            window.secretariatsChart.data.datasets[0].data = filteredData.map(item => item.TotalSecretariats);
+            window.secretariatsChart.data.datasets[1].data = filteredData.map(item => item.CoverdSecretariates);
+            window.secretariatsChart.update();
+            
+            // Update Comparison Chart
+            window.comparisonChart.data.labels = labels;
+            window.comparisonChart.data.datasets[0].data = filteredData.map(item => item.TotalFamilies);
+            window.comparisonChart.data.datasets[1].data = filteredData.map(item => item.TotalFamilyMembers);
+            window.comparisonChart.data.datasets[2].data = filteredData.map(item => item.TotalAdopted);
+            window.comparisonChart.data.datasets[3].data = filteredData.map(item => item.TotalFamiliesYetToAdopt);
+            window.comparisonChart.update();
+            
+            // Update Top/Bottom charts based on selected metric
+            updateTopBottomCharts(metric);
+        }
+        
+        function updateTopBottomCharts(metric) {
+            let sortedData, topLabels, topData, bottomLabels, bottomData;
+            
+            switch(metric) {
+                case 'TotalFamilies':
+                    sortedData = [...constituencyData].sort((a, b) => b.TotalFamilies - a.TotalFamilies);
+                    topLabels = sortedData.slice(0, 5).map(item => item.ConstituencyName);
+                    topData = sortedData.slice(0, 5).map(item => item.TotalFamilies);
+                    bottomLabels = sortedData.slice(-5).reverse().map(item => item.ConstituencyName);
+                    bottomData = sortedData.slice(-5).reverse().map(item => item.TotalFamilies);
+                    break;
+                case 'TotalFamilyMembers':
+                    sortedData = [...constituencyData].sort((a, b) => b.TotalFamilyMembers - a.TotalFamilyMembers);
+                    topLabels = sortedData.slice(0, 5).map(item => item.ConstituencyName);
+                    topData = sortedData.slice(0, 5).map(item => item.TotalFamilyMembers);
+                    bottomLabels = sortedData.slice(-5).reverse().map(item => item.ConstituencyName);
+                    bottomData = sortedData.slice(-5).reverse().map(item => item.TotalFamilyMembers);
+                    break;
+                case 'TotalAdopted':
+                    sortedData = [...constituencyData].sort((a, b) => b.TotalAdopted - a.TotalAdopted);
+                    topLabels = sortedData.slice(0, 5).map(item => item.ConstituencyName);
+                    topData = sortedData.slice(0, 5).map(item => item.TotalAdopted);
+                    bottomLabels = sortedData.slice(-5).reverse().map(item => item.ConstituencyName);
+                    bottomData = sortedData.slice(-5).reverse().map(item => item.TotalAdopted);
+                    break;
+                case 'TotalFamiliesYetToAdopt':
+                    sortedData = [...constituencyData].sort((a, b) => b.TotalFamiliesYetToAdopt - a.TotalFamiliesYetToAdopt);
+                    topLabels = sortedData.slice(0, 5).map(item => item.ConstituencyName);
+                    topData = sortedData.slice(0, 5).map(item => item.TotalFamiliesYetToAdopt);
+                    bottomLabels = sortedData.slice(-5).reverse().map(item => item.ConstituencyName);
+                    bottomData = sortedData.slice(-5).reverse().map(item => item.TotalFamiliesYetToAdopt);
+                    break;
+                case 'CoverageRatio':
+                    sortedData = [...constituencyData].sort((a, b) => 
+                        (b.CoverdMandals / b.TotalMandals) - (a.CoverdMandals / a.TotalMandals));
+                    topLabels = sortedData.slice(0, 5).map(item => item.ConstituencyName);
+                    topData = sortedData.slice(0, 5).map(item => Math.round((item.CoverdMandals / item.TotalMandals) * 100));
+                    bottomLabels = sortedData.slice(-5).reverse().map(item => item.ConstituencyName);
+                    bottomData = sortedData.slice(-5).reverse().map(item => Math.round((item.CoverdMandals / item.TotalMandals) * 100));
+                    break;
+            }
+            
+            // Update Top chart
+            window.topAdoptionChart.data.labels = topLabels;
+            window.topAdoptionChart.data.datasets[0].data = topData;
+            window.topAdoptionChart.options.scales.y.title.text = metric === 'CoverageRatio' ? 'Coverage Percentage' : 'Count';
+            window.topAdoptionChart.update();
+            
+            // Update Bottom chart
+            window.bottomAdoptionChart.data.labels = bottomLabels;
+            window.bottomAdoptionChart.data.datasets[0].data = bottomData;
+            window.bottomAdoptionChart.options.scales.y.title.text = metric === 'CoverageRatio' ? 'Coverage Percentage' : 'Count';
+            window.bottomAdoptionChart.update();
+        }
+        
+        function toggleStackedView() {
+            const isStacked = document.getElementById('stackedToggle').checked;
+            
+            window.adoptionChart.options.scales.x.stacked = isStacked;
+            window.adoptionChart.options.scales.y.stacked = isStacked;
+            window.adoptionChart.update();
+        }
+        
+        function exportToPdf() {
+            // Use html2canvas and jsPDF to export the dashboard as PDF
+            const element = document.body;
+            const options = {
+                scale: 2,
+                useCORS: true,
+                allowTaint: true,
+                scrollY: 0
+            };
+            
+            html2canvas(element, options).then(canvas => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+                const imgProps = pdf.getImageProperties(imgData);
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+                
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+                pdf.save('AP-Constituency-Dashboard.pdf');
+            });
+        }
+        
+        function exportToCsv() {
+            // Convert the data to CSV format
+            let csv = 'Constituency,Total Mandals,Covered Mandals,Coverage %,Total Secretariats,Covered Secretariats,Coverage %,Total Families,Family Members,Adopted Families,Adoption %,Pending Adoption,Margadarsi Mobilized\n';
+            
+            constituencyData.forEach(item => {
+                const coverageRate = (item.CoverdMandals / item.TotalMandals) * 100;
+                const secretariatRate = (item.CoverdSecretariates / item.TotalSecretariats) * 100;
+                const adoptionRate = (item.TotalAdopted / item.TotalFamilies) * 100;
+                
+                csv += `"${item.ConstituencyName}",${item.TotalMandals},${item.CoverdMandals},${coverageRate.toFixed(2)}%,${item.TotalSecretariats},${item.CoverdSecretariates},${secretariatRate.toFixed(2)}%,${item.TotalFamilies},${item.TotalFamilyMembers},${item.TotalAdopted},${adoptionRate.toFixed(2)}%,${item.TotalFamiliesYetToAdopt},${item.TotalMargadarsiMobilized}\n`;
+            });
+            
+            // Create download link
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'AP-Constituency-Data.csv');
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
 </body>
 </html>
