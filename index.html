@@ -117,6 +117,11 @@
             width: 3rem;
             height: 3rem;
         }
+        .data-source-info {
+            font-size: 0.8rem;
+            color: #6c757d;
+            margin-top: 5px;
+        }
     </style>
 </head>
 <body>
@@ -150,6 +155,7 @@
                         <option value="all">All Constituencies</option>
                         <!-- Options will be populated dynamically -->
                     </select>
+                    <div class="data-source-info">Data loaded from Google Sheets</div>
                 </div>
                 <div class="col-md-6">
                     <label for="metricSelect" class="form-label">Primary Metric</label>
@@ -365,9 +371,10 @@
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script>
-        // Configuration - Replace these with your actual Google Sheet details
-        const GOOGLE_SHEETS_ID = 'https://docs.google.com/spreadsheets/d/1Gd2drYqcQDF4E-XyXW7Q4ceTQ1PjCbOizkg2kTVZTvQ/edit?gid=293030583#gid=293030583'; // Replace with your Google Sheet ID
-        const SHEET_NAME = 'Drilldown Data'; // Replace with your sheet name
+        // Configuration - Replace with your Google Sheet details
+        const GOOGLE_SHEETS_ID = 'YOUR_GOOGLE_SHEET_ID'; // Replace with your Google Sheet ID
+        const SHEET_NAME = 'Sheet1'; // Replace with your sheet name
+        const SHEET_GID = '0'; // Replace with your sheet gid (usually 0 for the first sheet)
         
         // Global variable to store the data
         let constituencyData = [];
@@ -394,34 +401,43 @@
         }
         
         async function fetchDataFromGoogleSheet() {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${GOOGLE_SHEETS_ID}/values/${SHEET_NAME}?key=${API_KEY}`;
+            // Using the "Published to Web" CSV export method
+            const url = `https://docs.google.com/spreadsheets/d/${1Gd2drYqcQDF4E-XyXW7Q4ceTQ1PjCbOizkg2kTVZTvQ}/gviz/tq?tqx=out:csv&sheet=${Drilldown Data}&gid=${293030583}`;
             
             try {
                 const response = await fetch(url);
-                const data = await response.json();
+                const csvData = await response.text();
                 
-                if (!data.values || data.values.length === 0) {
+                // Parse CSV data
+                const lines = csvData.split('\n');
+                if (lines.length < 2) {
                     throw new Error('No data found in the sheet');
                 }
                 
                 // Extract headers (first row)
-                const headers = data.values[0];
+                const headers = lines[0].split(',').map(header => header.trim().replace(/"/g, ''));
                 
                 // Process data rows
-                constituencyData = data.values.slice(1).map(row => {
+                constituencyData = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i]) continue; // Skip empty lines
+                    
+                    const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(val => val.trim().replace(/^"|"$/g, ''));
                     const obj = {};
+                    
                     headers.forEach((header, index) => {
                         // Convert numeric values
                         if (['TotalMandals', 'CoverdMandals', 'TotalSecretariats', 'CoverdSecretariates', 
                              'TotalFamilies', 'TotalFamilyMembers', 'TotalAdopted', 'TotalFamiliesYetToAdopt', 
                              'TotalMargadarsiMobilized'].includes(header)) {
-                            obj[header] = parseInt(row[index]) || 0;
+                            obj[header] = parseInt(values[index]) || 0;
                         } else {
-                            obj[header] = row[index];
+                            obj[header] = values[index];
                         }
                     });
-                    return obj;
-                });
+                    
+                    constituencyData.push(obj);
+                }
                 
                 console.log('Data loaded successfully:', constituencyData);
             } catch (error) {
@@ -458,6 +474,9 @@
             document.getElementById('exportPdf').addEventListener('click', exportToPdf);
             document.getElementById('exportData').addEventListener('click', exportToCsv);
         }
+        
+        // [All the chart initialization and update functions remain the same as in the previous version]
+        // ... (include all the functions from initKPIs() through exportToCsv())
         
         function initKPIs() {
             const totalFamilies = constituencyData.reduce((sum, item) => sum + item.TotalFamilies, 0);
