@@ -372,9 +372,9 @@
     <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
     <script>
         // Configuration - Replace with your Google Sheet details
-        const GOOGLE_SHEETS_ID = 'YOUR_GOOGLE_SHEET_ID'; // Replace with your Google Sheet ID
-        const SHEET_NAME = 'Sheet1'; // Replace with your sheet name
-        const SHEET_GID = '0'; // Replace with your sheet gid (usually 0 for the first sheet)
+        const GOOGLE_SHEETS_ID = '1Gd2drYqcQDF4E-XyXW7Q4ceTQ1PjCbOizkg2kTVZTvQ'; // Replace with your Google Sheet ID
+        const SHEET_NAME = 'Drilldown Data'; // Replace with your sheet name
+        const SHEET_GID = '293030583'; // Replace with your sheet gid (usually 0 for the first sheet)
         
         // Global variable to store the data
         let constituencyData = [];
@@ -402,7 +402,7 @@
         
         async function fetchDataFromGoogleSheet() {
             // Using the "Published to Web" CSV export method
-            const url = `https://docs.google.com/spreadsheets/d/${1Gd2drYqcQDF4E-XyXW7Q4ceTQ1PjCbOizkg2kTVZTvQ}/gviz/tq?tqx=out:csv&sheet=${Drilldown Data}&gid=${293030583}`;
+            const url = `https://docs.google.com/spreadsheets/d/${GOOGLE_SHEETS_ID}/gviz/tq?tqx=out:csv&sheet=${SHEET_NAME}&gid=${SHEET_GID}`;
             
             try {
                 const response = await fetch(url);
