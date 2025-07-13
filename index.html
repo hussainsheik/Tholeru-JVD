@@ -12,7 +12,10 @@
         google.charts.load('current', {
             'packages': ['corechart', 'controls', 'geochart', 'barchart']
         });
-        google.charts.setOnLoadCallback(drawDashboard);
+        google.charts.setOnLoadCallback(() => {
+            // Ensure DOM is loaded before drawing
+            window.addEventListener('DOMContentLoaded', drawDashboard);
+        });
 
         // Google Sheet details
         const sheetId = '1Gd2drYqcQDF4E-XyXW7Q4ceTQ1PjCbOizkg2kTVZTvQ'; // Replace with your Google Sheet ID
@@ -20,6 +23,15 @@
         const dataSourceUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?sheet=${sheetName}&tqx=out:json`;
 
         function drawDashboard() {
+            // Verify container elements exist
+            const containers = ['filter_div', 'piechart_div', 'barchart_div', 'geochart_div', 'table_div'];
+            for (const id of containers) {
+                if (!document.getElementById(id)) {
+                    console.error(`Container with ID '${id}' not found in the DOM.`);
+                    return;
+                }
+            }
+
             // Query the Google Sheet
             var query = new google.visualization.Query(dataSourceUrl);
             query.send(handleQueryResponse);
@@ -27,7 +39,8 @@
 
         function handleQueryResponse(response) {
             if (response.isError()) {
-                alert('Error in query: ' + response.getMessage() + ' ' + response.getDetailedMessage());
+                console.error('Query Error:', response.getMessage(), response.getDetailedMessage());
+                alert('Error fetching data: ' + response.getMessage());
                 return;
             }
 
@@ -59,8 +72,7 @@
                         'allowTyping': true,
                         'allowMultiple': true,
                         'selectedValuesLayout': 'below',
-                        'caption': 'Choose constituencies...',
-                        'cssClass': 'border border-gray-300 rounded p-2 w-full'
+                        'caption': 'Choose constituencies...'
                     }
                 }
             });
@@ -224,6 +236,13 @@
             color: white;
             border-radius: 0.5rem;
             padding: 1.5rem;
+        }
+        #filter_div select {
+            border: 1px solid #D1D5DB;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
+            width: 100%;
+            background-color: #FFFFFF;
         }
     </style>
 </head>
