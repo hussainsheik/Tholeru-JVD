@@ -10,77 +10,135 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
+        :root {
+            --primary-color: #1A4B8C;
+            --secondary-color: #2D9596;
+            --accent-color: #F2668B;
+            --light-color: #F8F9FA;
+            --dark-color: #212529;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+        
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
+            background-color: var(--light-color);
+            color: var(--dark-color);
         }
+        
         .dashboard-header {
-            background: linear-gradient(135deg, #0d6efd, #0b5ed7);
+            background: linear-gradient(135deg, var(--primary-color), #0b3d7a);
             color: white;
             padding: 2rem 0;
             margin-bottom: 2rem;
             border-radius: 0 0 10px 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
+        
         .card {
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-bottom: 20px;
-            transition: transform 0.3s;
-            background-color: #FFFACD; /* Light yellow background */
+            transition: transform 0.3s, box-shadow 0.3s;
+            border: none;
+            background-color: white;
         }
+        
         .card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
         }
+        
         .card-header {
             font-weight: 600;
             border-radius: 10px 10px 0 0 !important;
-            background-color: #FFA07A; /* Light red header */
+            background-color: var(--primary-color);
             color: white;
+            border-bottom: none;
+            padding: 1rem 1.25rem;
         }
+        
         #map {
-            height: 400px;
+            height: 500px;
             border-radius: 10px;
             z-index: 1;
+            background-color: #e9ecef;
         }
+        
+        .map-container {
+            position: relative;
+        }
+        
+        .map-loading {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            border-radius: 10px;
+        }
+        
         .data-table {
             font-size: 0.9rem;
         }
+        
         .data-table th {
-            background-color: #FFA07A; /* Light red header */
+            background-color: var(--primary-color);
             color: white;
             position: sticky;
             top: 0;
+            padding: 12px 15px;
         }
+        
+        .data-table td {
+            padding: 10px 15px;
+            vertical-align: middle;
+        }
+        
         .comparison-chart {
             height: 350px;
         }
+        
         .kpi-card {
             text-align: center;
-            padding: 15px;
-            background-color: #FFFACD; /* Light yellow background */
+            padding: 20px;
+            background-color: white;
+            border-left: 4px solid var(--secondary-color);
         }
+        
         .kpi-value {
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 700;
-            color: #0d6efd;
+            color: var(--primary-color);
+            margin-bottom: 5px;
         }
+        
         .kpi-label {
-            font-size: 0.9rem;
-            color: #6c757d;
+            font-size: 1rem;
+            color: var(--dark-color);
+            font-weight: 500;
         }
+        
         .constituency-selector {
-            background-color: #FFFACD; /* Light yellow background */
-            padding: 10px;
-            border-radius: 5px;
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             z-index: 1000;
+            border: 1px solid rgba(0,0,0,0.1);
         }
+        
         .tab-content {
-            padding: 15px 0;
+            padding: 20px 0;
         }
+        
         .loading-spinner {
             display: none;
             position: fixed;
@@ -93,32 +151,99 @@
             justify-content: center;
             align-items: center;
         }
+        
         .spinner-border {
             width: 3rem;
             height: 3rem;
+            color: var(--primary-color);
         }
+        
         .data-source-info {
             font-size: 0.8rem;
             color: #6c757d;
             margin-top: 5px;
         }
-        .btn-light {
-            background-color: #FFA07A; /* Light red buttons */
-            color: white;
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
         }
+        
+        .btn-primary:hover {
+            background-color: #0b3d7a;
+            border-color: #0b3d7a;
+        }
+        
         .nav-tabs .nav-link.active {
-            background-color: #FFFACD; /* Light yellow active tab */
-            border-color: #dee2e6 #dee2e6 #FFFACD;
-            color: #0d6efd;
+            background-color: white;
+            border-color: #dee2e6 #dee2e6 white;
+            color: var(--primary-color);
+            font-weight: 600;
+            border-top: 3px solid var(--primary-color);
         }
+        
         .nav-tabs .nav-link {
-            color: #FFA07A; /* Light red inactive tabs */
+            color: var(--dark-color);
+            border-top: 3px solid transparent;
+        }
+        
+        .nav-tabs {
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .legend {
+            font-size: 0.8rem;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            line-height: 1.6;
+        }
+        
+        .legend i {
+            width: 18px;
+            height: 18px;
+            float: left;
+            margin-right: 8px;
+            opacity: 0.8;
+        }
+        
+        .info.legend {
+            padding: 10px;
+        }
+        
+        .progress {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e9ecef;
+        }
+        
+        .progress-bar {
+            background-color: var(--secondary-color);
+        }
+        
+        .leaflet-popup-content {
+            font-size: 0.9rem;
+        }
+        
+        .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+        }
+        
+        @media (max-width: 768px) {
+            .kpi-card {
+                margin-bottom: 15px;
+            }
+            
+            #map {
+                height: 350px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="loading-spinner" id="loadingSpinner">
-        <div class="spinner-border text-light" role="status">
+        <div class="spinner-border" role="status">
             <span class="visually-hidden">Loading...</span>
         </div>
     </div>
@@ -267,13 +392,18 @@
                     <div class="card-header">
                         Constituency Geographical Distribution
                     </div>
-                    <div class="card-body">
+                    <div class="card-body map-container">
                         <div id="map"></div>
+                        <div class="map-loading" id="mapLoading">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading map...</span>
+                            </div>
+                        </div>
                         <div class="legend mt-3">
                             <strong>Legend:</strong>
-                            <span class="badge" style="background-color: #FFFACD; color: #333;">High Adoption</span>
-                            <span class="badge" style="background-color: #FFA07A; color: white;">Medium Adoption</span>
-                            <span class="badge" style="background-color: #FF6347; color: white;">Low Adoption</span>
+                            <div><i style="background: #2D9596"></i> High Adoption (>70%)</div>
+                            <div><i style="background: #F2668B"></i> Medium Adoption (40-70%)</div>
+                            <div><i style="background: #9A3B3B"></i> Low Adoption (<40%)</div>
                         </div>
                     </div>
                 </div>
@@ -330,6 +460,7 @@
         
         // Global variable to store the data
         let constituencyData = [];
+        let map; // Global map variable
         
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
@@ -357,6 +488,7 @@
             
             try {
                 const response = await fetch(url);
+                if (!response.ok) throw new Error('Network response was not ok');
                 const csvData = await response.text();
                 
                 const lines = csvData.split('\n');
@@ -424,8 +556,8 @@
             const totalMobilized = constituencyData.reduce((sum, item) => sum + item.TotalMargadarsiMobilized, 0);
             
             document.getElementById('totalFamiliesKpi').textContent = totalFamilies.toLocaleString();
-            document.getElementById('adoptionRateKpi').textContent = Math.round((totalAdopted / totalFamilies) * 100) + '%';
-            document.getElementById('coverageRateKpi').textContent = Math.round((coveredMandals / totalMandals) * 100) + '%';
+            document.getElementById('adoptionRateKpi').textContent = totalFamilies > 0 ? Math.round((totalAdopted / totalFamilies) * 100) + '%' : '0%';
+            document.getElementById('coverageRateKpi').textContent = totalMandals > 0 ? Math.round((coveredMandals / totalMandals) * 100) + '%' : '0%';
             document.getElementById('mobilizedKpi').textContent = totalMobilized.toLocaleString();
         }
         
@@ -443,15 +575,15 @@
                         {
                             label: 'Adopted Families',
                             data: adoptedData,
-                            backgroundColor: '#FFA07A', // Light red
-                            borderColor: '#FF6347',
+                            backgroundColor: '#2D9596', // Teal
+                            borderColor: '#1A4B8C',
                             borderWidth: 1
                         },
                         {
                             label: 'Pending Adoption',
                             data: pendingData,
-                            backgroundColor: '#FFFACD', // Light yellow
-                            borderColor: '#FFD700',
+                            backgroundColor: '#F2668B', // Coral
+                            borderColor: '#9A3B3B',
                             borderWidth: 1
                         }
                     ]
@@ -498,14 +630,14 @@
                     datasets: [{
                         data: coverageData,
                         backgroundColor: [
-                            '#FFFACD', // Light yellow
-                            '#FFA07A', // Light red
-                            '#FFD700',
-                            '#FF6347',
-                            '#FF8C00',
-                            '#FFDAB9',
-                            '#E9967A',
-                            '#CD853F'
+                            '#1A4B8C', // Dark Blue
+                            '#2D9596', // Teal
+                            '#F2668B', // Coral
+                            '#9A3B3B', // Dark Red
+                            '#F8B195',
+                            '#F67280',
+                            '#C06C84',
+                            '#6C5B7B'
                         ],
                         borderWidth: 1
                     }]
@@ -544,15 +676,15 @@
                         {
                             label: 'Total Mandals',
                             data: totalData,
-                            backgroundColor: '#FFFACD', // Light yellow
-                            borderColor: '#FFD700',
+                            backgroundColor: '#1A4B8C', // Dark Blue
+                            borderColor: '#0b3d7a',
                             borderWidth: 1
                         },
                         {
                             label: 'Covered Mandals',
                             data: coveredData,
-                            backgroundColor: '#FFA07A', // Light red
-                            borderColor: '#FF6347',
+                            backgroundColor: '#2D9596', // Teal
+                            borderColor: '#1A4B8C',
                             borderWidth: 1
                         }
                     ]
@@ -601,15 +733,15 @@
                         {
                             label: 'Total Secretariats',
                             data: totalData,
-                            backgroundColor: '#FFFACD', // Light yellow
-                            borderColor: '#FFD700',
+                            backgroundColor: '#1A4B8C', // Dark Blue
+                            borderColor: '#0b3d7a',
                             borderWidth: 1
                         },
                         {
                             label: 'Covered Secretariats',
                             data: coveredData,
-                            backgroundColor: '#FFA07A', // Light red
-                            borderColor: '#FF6347',
+                            backgroundColor: '#2D9596', // Teal
+                            borderColor: '#1A4B8C',
                             borderWidth: 1
                         }
                     ]
@@ -660,34 +792,34 @@
                         {
                             label: 'Total Families',
                             data: familiesData,
-                            backgroundColor: 'rgba(255, 250, 205, 0.2)', // Light yellow
-                            borderColor: '#FFD700',
+                            backgroundColor: 'rgba(26, 75, 140, 0.2)', // Dark Blue
+                            borderColor: '#1A4B8C',
                             borderWidth: 2,
-                            pointBackgroundColor: '#FFD700'
+                            pointBackgroundColor: '#1A4B8C'
                         },
                         {
                             label: 'Family Members',
                             data: membersData,
-                            backgroundColor: 'rgba(255, 160, 122, 0.2)', // Light red
-                            borderColor: '#FF6347',
+                            backgroundColor: 'rgba(45, 149, 150, 0.2)', // Teal
+                            borderColor: '#2D9596',
                             borderWidth: 2,
-                            pointBackgroundColor: '#FF6347'
+                            pointBackgroundColor: '#2D9596'
                         },
                         {
                             label: 'Adopted Families',
                             data: adoptedData,
-                            backgroundColor: 'rgba(255, 215, 0, 0.2)',
-                            borderColor: '#FFA500',
+                            backgroundColor: 'rgba(242, 102, 139, 0.2)', // Coral
+                            borderColor: '#F2668B',
                             borderWidth: 2,
-                            pointBackgroundColor: '#FFA500'
+                            pointBackgroundColor: '#F2668B'
                         },
                         {
                             label: 'Pending Adoption',
                             data: pendingData,
-                            backgroundColor: 'rgba(255, 99, 71, 0.2)',
-                            borderColor: '#FF4500',
+                            backgroundColor: 'rgba(154, 59, 59, 0.2)', // Dark Red
+                            borderColor: '#9A3B3B',
                             borderWidth: 2,
-                            pointBackgroundColor: '#FF4500'
+                            pointBackgroundColor: '#9A3B3B'
                         }
                     ]
                 },
@@ -724,44 +856,55 @@
                 "Ungutur": [16.6167, 81.4167]
             };
         
-            const map = L.map('map').setView([16.6, 81.5], 10);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
-        
-            constituencyData.forEach(constituency => {
-                const adoptionRate = (constituency.TotalAdopted / constituency.TotalFamilies) * 100;
-                let markerColor;
+            // Initialize the map
+            try {
+                map = L.map('map').setView([16.6, 81.5], 10);
                 
-                if (adoptionRate > 70) {
-                    markerColor = '#FFFACD'; // Light yellow
-                } else if (adoptionRate > 40) {
-                    markerColor = '#FFA07A'; // Light red
-                } else {
-                    markerColor = '#FF6347'; // Tomato
-                }
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                }).addTo(map);
                 
-                const marker = L.circleMarker(
-                    constituencyCoordinates[constituency.ConstituencyName],
-                    {
-                        radius: 10,
-                        fillColor: markerColor,
-                        color: '#000',
-                        weight: 1,
-                        opacity: 1,
-                        fillOpacity: 0.8
+                // Add markers for each constituency
+                constituencyData.forEach(constituency => {
+                    const adoptionRate = (constituency.TotalAdopted / constituency.TotalFamilies) * 100;
+                    let markerColor;
+                    
+                    if (adoptionRate > 70) {
+                        markerColor = '#2D9596'; // Teal for high adoption
+                    } else if (adoptionRate > 40) {
+                        markerColor = '#F2668B'; // Coral for medium adoption
+                    } else {
+                        markerColor = '#9A3B3B'; // Dark red for low adoption
                     }
-                ).addTo(map);
+                    
+                    const marker = L.circleMarker(
+                        constituencyCoordinates[constituency.ConstituencyName],
+                        {
+                            radius: 12,
+                            fillColor: markerColor,
+                            color: '#fff',
+                            weight: 1,
+                            opacity: 1,
+                            fillOpacity: 0.8
+                        }
+                    ).addTo(map);
+                    
+                    marker.bindPopup(`
+                        <div style="font-weight:600;margin-bottom:5px">${constituency.ConstituencyName}</div>
+                        <div>Total Families: <strong>${constituency.TotalFamilies.toLocaleString()}</strong></div>
+                        <div>Adopted: <strong>${constituency.TotalAdopted.toLocaleString()}</strong> (${Math.round(adoptionRate)}%)</div>
+                        <div>Pending: <strong>${constituency.TotalFamiliesYetToAdopt.toLocaleString()}</strong></div>
+                        <div>Mandals: <strong>${constituency.CoverdMandals}/${constituency.TotalMandals}</strong> covered</div>
+                    `);
+                });
                 
-                marker.bindPopup(`
-                    <strong>${constituency.ConstituencyName}</strong><br>
-                    Total Families: ${constituency.TotalFamilies.toLocaleString()}<br>
-                    Adopted: ${constituency.TotalAdopted.toLocaleString()} (${Math.round(adoptionRate)}%)<br>
-                    Pending: ${constituency.TotalFamiliesYetToAdopt.toLocaleString()}<br>
-                    Mandals: ${constituency.CoverdMandals}/${constituency.TotalMandals} covered
-                `);
-            });
+                // Hide loading spinner when map is ready
+                document.getElementById('mapLoading').style.display = 'none';
+            } catch (error) {
+                console.error('Error initializing map:', error);
+                document.getElementById('mapLoading').innerHTML = 
+                    '<div class="alert alert-danger">Failed to load map. Please try refreshing the page.</div>';
+            }
         }
         
         function populateDataTable() {
