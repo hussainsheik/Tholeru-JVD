@@ -101,6 +101,12 @@
         .chart-container {
             grid-column: span 6;
             height: 350px;
+            position: relative;
+        }
+        
+        .chart {
+            width: 100%;
+            height: 100%;
         }
         
         .data-table {
@@ -218,9 +224,6 @@
         </header>
         
         <div class="filter-controls">
-            <select id="districtFilter">
-                <option value="">All Districts</option>
-            </select>
             <select id="constituencyFilter">
                 <option value="">All Constituencies</option>
             </select>
@@ -285,14 +288,14 @@
                 <div class="card-header">
                     <h2 class="card-title">Family Adoption Status</h2>
                 </div>
-                <div id="adoptionPieChart"></div>
+                <div id="adoptionPieChart" class="chart"></div>
             </div>
             
             <div class="card chart-container">
                 <div class="card-header">
                     <h2 class="card-title">Margadarsi Mobilization</h2>
                 </div>
-                <div id="margadarsiChart"></div>
+                <div id="margadarsiChart" class="chart"></div>
             </div>
             
             <div class="card data-table">
@@ -302,8 +305,6 @@
                 <table id="dataTable">
                     <thead>
                         <tr>
-                            <th>District Code</th>
-                            <th>Constituency Code</th>
                             <th>Constituency Name</th>
                             <th>Total Families</th>
                             <th>Family Members</th>
@@ -342,6 +343,10 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
+        
+        // Chart instances
+        let adoptionPieChart;
+        let margadarsiChart;
         
         // Fetch data from Google Sheets
         async function fetchData() {
@@ -402,20 +407,15 @@
         
         // Update filter dropdowns
         function updateFilters(data) {
-            const districtFilter = document.getElementById('districtFilter');
             const constituencyFilter = document.getElementById('constituencyFilter');
             
-            // Get unique districts and constituencies
-            const districts = [...new Set(data.map(item => item.DistrictCode))];
+            // Get unique constituencies
             const constituencies = [...new Set(data.map(item => item.ConstituencyName))];
             
-            // Populate district filter
-            districts.forEach(district => {
-                const option = document.createElement('option');
-                option.value = district;
-                option.textContent = district;
-                districtFilter.appendChild(option);
-            });
+            // Clear existing options except the first one
+            while (constituencyFilter.options.length > 1) {
+                constituencyFilter.remove(1);
+            }
             
             // Populate constituency filter
             constituencies.forEach(constituency => {
@@ -425,21 +425,15 @@
                 constituencyFilter.appendChild(option);
             });
             
-            // Add event listeners for filtering
-            districtFilter.addEventListener('change', () => filterData(data));
+            // Add event listener for filtering
             constituencyFilter.addEventListener('change', () => filterData(data));
         }
         
         // Filter data based on selections
         function filterData(data) {
-            const districtFilter = document.getElementById('districtFilter').value;
             const constituencyFilter = document.getElementById('constituencyFilter').value;
             
             let filteredData = [...data];
-            
-            if (districtFilter) {
-                filteredData = filteredData.filter(item => item.DistrictCode === districtFilter);
-            }
             
             if (constituencyFilter) {
                 filteredData = filteredData.filter(item => item.ConstituencyName === constituencyFilter);
@@ -475,11 +469,19 @@
         
         // Render charts
         function renderCharts(data) {
+            // Destroy existing charts if they exist
+            if (adoptionPieChart) {
+                adoptionPieChart.destroy();
+            }
+            if (margadarsiChart) {
+                margadarsiChart.destroy();
+            }
+            
             // Prepare data for charts
             const constituencies = data.map(item => item.ConstituencyName);
             
             // Family Adoption Pie Chart
-            const adoptionPieChart = new ApexCharts(document.querySelector("#adoptionPieChart"), {
+            adoptionPieChart = new ApexCharts(document.querySelector("#adoptionPieChart"), {
                 series: [
                     data.reduce((sum, item) => sum + (item.TotalAdopted || 0), 0),
                     data.reduce((sum, item) => sum + (item.TotalFamiliesYetToAdopt || 0), 0)
@@ -524,7 +526,7 @@
             adoptionPieChart.render();
             
             // Margadarsi Mobilization Chart
-            const margadarsiChart = new ApexCharts(document.querySelector("#margadarsiChart"), {
+            margadarsiChart = new ApexCharts(document.querySelector("#margadarsiChart"), {
                 series: [{
                     name: 'Margadarsi Mobilized',
                     data: data.map(item => item.TotalMargadarsiMobilized || 0)
@@ -581,8 +583,6 @@
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${item.DistrictCode || ''}</td>
-                    <td>${item.ConstituencyCode || ''}</td>
                     <td>${item.ConstituencyName || ''}</td>
                     <td>${item.TotalFamilies || 0}</td>
                     <td>${item.TotalFamilyMembers || 0}</td>
@@ -637,7 +637,6 @@
                     // Add popup with constituency info
                     marker.bindPopup(`
                         <b>${constituency}</b><br>
-                        District: ${item.DistrictCode || 'N/A'}<br>
                         Total Families: ${item.TotalFamilies || 0}<br>
                         Adopted Families: ${item.TotalAdopted || 0} (${(adoptionRate * 100).toFixed(1)}%)<br>
                         Families Yet to Adopt: ${item.TotalFamiliesYetToAdopt || 0}<br>
