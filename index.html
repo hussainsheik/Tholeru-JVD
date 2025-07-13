@@ -101,6 +101,12 @@
         .chart-container {
             grid-column: span 6;
             height: 350px;
+            position: relative;
+        }
+        
+        .chart {
+            width: 100%;
+            height: 100%;
         }
         
         .data-table {
@@ -214,13 +220,10 @@
     <div class="container">
         <header>
             <h1>Constituency Data Dashboard</h1>
-            <div class="subtitle">Interactive visualization of mandal and secretariat coverage</div>
+            <div class="subtitle">Interactive visualization of family adoption and coverage metrics</div>
         </header>
         
         <div class="filter-controls">
-            <select id="districtFilter">
-                <option value="">All Districts</option>
-            </select>
             <select id="constituencyFilter">
                 <option value="">All Constituencies</option>
             </select>
@@ -235,63 +238,64 @@
                 <div class="legend">
                     <div class="legend-item">
                         <div class="legend-color" style="background-color: #4cc9f0;"></div>
-                        <span>High Coverage</span>
+                        <span>High Adoption</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color" style="background-color: #4895ef;"></div>
-                        <span>Medium Coverage</span>
+                        <span>Medium Adoption</span>
                     </div>
                     <div class="legend-item">
                         <div class="legend-color" style="background-color: #4361ee;"></div>
-                        <span>Low Coverage</span>
+                        <span>Low Adoption</span>
                     </div>
                 </div>
             </div>
             
             <div class="card summary-stats">
                 <div class="card-header">
-                    <h2 class="card-title">Key Statistics</h2>
+                    <h2 class="card-title">Family Adoption Statistics</h2>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-value" id="totalMandals">0</span>
-                    <span class="stat-label">Total Mandals</span>
+                    <span class="stat-value" id="totalFamilies">0</span>
+                    <span class="stat-label">Total Families</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-value" id="coveredMandals">0</span>
-                    <span class="stat-label">Covered Mandals</span>
-                    <div class="progress-container">
-                        <div class="progress-bar" id="mandalProgress" style="width: 0%"></div>
-                    </div>
+                    <span class="stat-value" id="totalFamilyMembers">0</span>
+                    <span class="stat-label">Total Family Members</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-value" id="totalSecretariats">0</span>
-                    <span class="stat-label">Total Secretariats</span>
+                    <span class="stat-value" id="totalAdopted">0</span>
+                    <span class="stat-label">Adopted Families</span>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-value" id="coveredSecretariats">0</span>
-                    <span class="stat-label">Covered Secretariats</span>
-                    <div class="progress-container">
-                        <div class="progress-bar" id="secretariatProgress" style="width: 0%"></div>
-                    </div>
+                    <span class="stat-value" id="familiesYetToAdopt">0</span>
+                    <span class="stat-label">Families Yet to Adopt</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-value" id="totalMargadarsi">0</span>
+                    <span class="stat-label">Margadarsi Mobilized</span>
                 </div>
                 <div class="stat-card">
                     <span class="stat-value" id="adoptionRate">0%</span>
                     <span class="stat-label">Family Adoption Rate</span>
+                    <div class="progress-container">
+                        <div class="progress-bar" id="adoptionProgress" style="width: 0%"></div>
+                    </div>
                 </div>
             </div>
             
             <div class="card chart-container">
                 <div class="card-header">
-                    <h2 class="card-title">Mandal Coverage by Constituency</h2>
+                    <h2 class="card-title">Family Adoption Status</h2>
                 </div>
-                <div id="mandalChart"></div>
+                <div id="adoptionPieChart" class="chart"></div>
             </div>
             
             <div class="card chart-container">
                 <div class="card-header">
-                    <h2 class="card-title">Secretariat Coverage</h2>
+                    <h2 class="card-title">Margadarsi Mobilization</h2>
                 </div>
-                <div id="secretariatChart"></div>
+                <div id="margadarsiChart" class="chart"></div>
             </div>
             
             <div class="card data-table">
@@ -301,15 +305,12 @@
                 <table id="dataTable">
                     <thead>
                         <tr>
-                            <th>District Code</th>
-                            <th>Constituency Code</th>
                             <th>Constituency Name</th>
-                            <th>Total Mandals</th>
-                            <th>Covered Mandals</th>
-                            <th>Total Secretariats</th>
-                            <th>Covered Secretariats</th>
                             <th>Total Families</th>
+                            <th>Family Members</th>
                             <th>Adopted Families</th>
+                            <th>Families Yet to Adopt</th>
+                            <th>Margadarsi Mobilized</th>
                             <th>Adoption Rate</th>
                         </tr>
                     </thead>
@@ -342,6 +343,10 @@
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
+        
+        // Chart instances
+        let adoptionPieChart;
+        let margadarsiChart;
         
         // Fetch data from Google Sheets
         async function fetchData() {
@@ -402,20 +407,15 @@
         
         // Update filter dropdowns
         function updateFilters(data) {
-            const districtFilter = document.getElementById('districtFilter');
             const constituencyFilter = document.getElementById('constituencyFilter');
             
-            // Get unique districts and constituencies
-            const districts = [...new Set(data.map(item => item.DistrictCode))];
+            // Get unique constituencies
             const constituencies = [...new Set(data.map(item => item.ConstituencyName))];
             
-            // Populate district filter
-            districts.forEach(district => {
-                const option = document.createElement('option');
-                option.value = district;
-                option.textContent = district;
-                districtFilter.appendChild(option);
-            });
+            // Clear existing options except the first one
+            while (constituencyFilter.options.length > 1) {
+                constituencyFilter.remove(1);
+            }
             
             // Populate constituency filter
             constituencies.forEach(constituency => {
@@ -425,21 +425,15 @@
                 constituencyFilter.appendChild(option);
             });
             
-            // Add event listeners for filtering
-            districtFilter.addEventListener('change', () => filterData(data));
+            // Add event listener for filtering
             constituencyFilter.addEventListener('change', () => filterData(data));
         }
         
         // Filter data based on selections
         function filterData(data) {
-            const districtFilter = document.getElementById('districtFilter').value;
             const constituencyFilter = document.getElementById('constituencyFilter').value;
             
             let filteredData = [...data];
-            
-            if (districtFilter) {
-                filteredData = filteredData.filter(item => item.DistrictCode === districtFilter);
-            }
             
             if (constituencyFilter) {
                 filteredData = filteredData.filter(item => item.ConstituencyName === constituencyFilter);
@@ -454,115 +448,49 @@
         
         // Calculate and display summary statistics
         function calculateSummary(data) {
-            const totalMandals = data.reduce((sum, item) => sum + (item.TotalMandals || 0), 0);
-            const coveredMandals = data.reduce((sum, item) => sum + (item.CoverdMandals || 0), 0);
-            const totalSecretariats = data.reduce((sum, item) => sum + (item.TotalSecretariats || 0), 0);
-            const coveredSecretariats = data.reduce((sum, item) => sum + (item.CoverdSecretariates || 0), 0);
             const totalFamilies = data.reduce((sum, item) => sum + (item.TotalFamilies || 0), 0);
-            const adoptedFamilies = data.reduce((sum, item) => sum + (item.TotalAdopted || 0), 0);
+            const totalFamilyMembers = data.reduce((sum, item) => sum + (item.TotalFamilyMembers || 0), 0);
+            const totalAdopted = data.reduce((sum, item) => sum + (item.TotalAdopted || 0), 0);
+            const familiesYetToAdopt = data.reduce((sum, item) => sum + (item.TotalFamiliesYetToAdopt || 0), 0);
+            const totalMargadarsi = data.reduce((sum, item) => sum + (item.TotalMargadarsiMobilized || 0), 0);
             
             // Update DOM elements
-            document.getElementById('totalMandals').textContent = totalMandals.toLocaleString();
-            document.getElementById('coveredMandals').textContent = coveredMandals.toLocaleString();
-            document.getElementById('totalSecretariats').textContent = totalSecretariats.toLocaleString();
-            document.getElementById('coveredSecretariats').textContent = coveredSecretariats.toLocaleString();
+            document.getElementById('totalFamilies').textContent = totalFamilies.toLocaleString();
+            document.getElementById('totalFamilyMembers').textContent = totalFamilyMembers.toLocaleString();
+            document.getElementById('totalAdopted').textContent = totalAdopted.toLocaleString();
+            document.getElementById('familiesYetToAdopt').textContent = familiesYetToAdopt.toLocaleString();
+            document.getElementById('totalMargadarsi').textContent = totalMargadarsi.toLocaleString();
             
-            // Calculate percentages
-            const mandalCoverage = totalMandals > 0 ? (coveredMandals / totalMandals) * 100 : 0;
-            const secretariatCoverage = totalSecretariats > 0 ? (coveredSecretariats / totalSecretariats) * 100 : 0;
-            const adoptionRate = totalFamilies > 0 ? (adoptedFamilies / totalFamilies) * 100 : 0;
-            
-            // Update progress bars
-            document.getElementById('mandalProgress').style.width = `${mandalCoverage}%`;
-            document.getElementById('secretariatProgress').style.width = `${secretariatCoverage}%`;
+            // Calculate adoption rate
+            const adoptionRate = totalFamilies > 0 ? (totalAdopted / totalFamilies) * 100 : 0;
             document.getElementById('adoptionRate').textContent = `${adoptionRate.toFixed(1)}%`;
+            document.getElementById('adoptionProgress').style.width = `${adoptionRate}%`;
         }
         
         // Render charts
         function renderCharts(data) {
+            // Destroy existing charts if they exist
+            if (adoptionPieChart) {
+                adoptionPieChart.destroy();
+            }
+            if (margadarsiChart) {
+                margadarsiChart.destroy();
+            }
+            
             // Prepare data for charts
             const constituencies = data.map(item => item.ConstituencyName);
-            const mandalData = data.map(item => ({
-                total: item.TotalMandals || 0,
-                covered: item.CoverdMandals || 0
-            }));
-            const secretariatData = data.map(item => ({
-                total: item.TotalSecretariats || 0,
-                covered: item.CoverdSecretariates || 0
-            }));
             
-            // Mandal Coverage Chart
-            const mandalChart = new ApexCharts(document.querySelector("#mandalChart"), {
-                series: [{
-                    name: 'Total Mandals',
-                    data: mandalData.map(d => d.total)
-                }, {
-                    name: 'Covered Mandals',
-                    data: mandalData.map(d => d.covered)
-                }],
-                chart: {
-                    type: 'bar',
-                    height: 350,
-                    toolbar: {
-                        show: true
-                    }
-                },
-                plotOptions: {
-                    bar: {
-                        horizontal: false,
-                        columnWidth: '55%',
-                        endingShape: 'rounded'
-                    },
-                },
-                dataLabels: {
-                    enabled: false
-                },
-                colors: ['#4361ee', '#4cc9f0'],
-                stroke: {
-                    show: true,
-                    width: 2,
-                    colors: ['transparent']
-                },
-                xaxis: {
-                    categories: constituencies,
-                    labels: {
-                        style: {
-                            fontSize: '12px'
-                        }
-                    }
-                },
-                yaxis: {
-                    title: {
-                        text: 'Number of Mandals'
-                    }
-                },
-                fill: {
-                    opacity: 1
-                },
-                tooltip: {
-                    y: {
-                        formatter: function (val) {
-                            return val
-                        }
-                    }
-                },
-                legend: {
-                    position: 'top'
-                }
-            });
-            mandalChart.render();
-            
-            // Secretariat Coverage Chart (Pie)
-            const secretariatChart = new ApexCharts(document.querySelector("#secretariatChart"), {
+            // Family Adoption Pie Chart
+            adoptionPieChart = new ApexCharts(document.querySelector("#adoptionPieChart"), {
                 series: [
-                    data.reduce((sum, item) => sum + (item.CoverdSecretariates || 0), 0),
-                    data.reduce((sum, item) => sum + ((item.TotalSecretariats || 0) - (item.CoverdSecretariates || 0)), 0)
+                    data.reduce((sum, item) => sum + (item.TotalAdopted || 0), 0),
+                    data.reduce((sum, item) => sum + (item.TotalFamiliesYetToAdopt || 0), 0)
                 ],
                 chart: {
                     type: 'donut',
                     height: 350
                 },
-                labels: ['Covered Secretariats', 'Remaining Secretariats'],
+                labels: ['Adopted Families', 'Families Yet to Adopt'],
                 colors: ['#4cc9f0', '#4361ee'],
                 responsive: [{
                     breakpoint: 480,
@@ -577,9 +505,71 @@
                 }],
                 legend: {
                     position: 'right'
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            labels: {
+                                show: true,
+                                total: {
+                                    show: true,
+                                    label: 'Total Families',
+                                    formatter: function (w) {
+                                        return w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString();
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             });
-            secretariatChart.render();
+            adoptionPieChart.render();
+            
+            // Margadarsi Mobilization Chart
+            margadarsiChart = new ApexCharts(document.querySelector("#margadarsiChart"), {
+                series: [{
+                    name: 'Margadarsi Mobilized',
+                    data: data.map(item => item.TotalMargadarsiMobilized || 0)
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    toolbar: {
+                        show: true
+                    }
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 4,
+                        horizontal: true,
+                    }
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                colors: ['#560bad'],
+                xaxis: {
+                    categories: constituencies,
+                    labels: {
+                        style: {
+                            fontSize: '12px'
+                        }
+                    }
+                },
+                yaxis: {
+                    title: {
+                        text: 'Constituencies'
+                    }
+                },
+                tooltip: {
+                    y: {
+                        formatter: function (val) {
+                            return val.toLocaleString();
+                        }
+                    }
+                }
+            });
+            margadarsiChart.render();
         }
         
         // Render data table
@@ -593,15 +583,12 @@
                 
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td>${item.DistrictCode || ''}</td>
-                    <td>${item.ConstituencyCode || ''}</td>
                     <td>${item.ConstituencyName || ''}</td>
-                    <td>${item.TotalMandals || 0}</td>
-                    <td>${item.CoverdMandals || 0}</td>
-                    <td>${item.TotalSecretariats || 0}</td>
-                    <td>${item.CoverdSecretariates || 0}</td>
                     <td>${item.TotalFamilies || 0}</td>
+                    <td>${item.TotalFamilyMembers || 0}</td>
                     <td>${item.TotalAdopted || 0}</td>
+                    <td>${item.TotalFamiliesYetToAdopt || 0}</td>
+                    <td>${item.TotalMargadarsiMobilized || 0}</td>
                     <td>${adoptionRate}</td>
                 `;
                 tableBody.appendChild(row);
@@ -623,14 +610,14 @@
                 const coords = constituencyCoordinates[constituency];
                 
                 if (coords) {
-                    const coverageRate = item.TotalMandals > 0 ? 
-                        (item.CoverdMandals || 0) / item.TotalMandals : 0;
+                    const adoptionRate = item.TotalFamilies > 0 ? 
+                        (item.TotalAdopted || 0) / item.TotalFamilies : 0;
                     
-                    // Determine color based on coverage rate
+                    // Determine color based on adoption rate
                     let color;
-                    if (coverageRate >= 0.7) color = '#4cc9f0'; // High coverage
-                    else if (coverageRate >= 0.4) color = '#4895ef'; // Medium coverage
-                    else color = '#4361ee'; // Low coverage
+                    if (adoptionRate >= 0.7) color = '#4cc9f0'; // High adoption
+                    else if (adoptionRate >= 0.4) color = '#4895ef'; // Medium adoption
+                    else color = '#4361ee'; // Low adoption
                     
                     // Create custom marker icon
                     const icon = L.divIcon({
@@ -650,10 +637,10 @@
                     // Add popup with constituency info
                     marker.bindPopup(`
                         <b>${constituency}</b><br>
-                        District: ${item.DistrictCode || 'N/A'}<br>
-                        Mandals: ${item.CoverdMandals || 0}/${item.TotalMandals || 0} (${(coverageRate * 100).toFixed(1)}%)<br>
-                        Secretariats: ${item.CoverdSecretariates || 0}/${item.TotalSecretariats || 0}<br>
-                        Families Adopted: ${item.TotalAdopted || 0}/${item.TotalFamilies || 0}
+                        Total Families: ${item.TotalFamilies || 0}<br>
+                        Adopted Families: ${item.TotalAdopted || 0} (${(adoptionRate * 100).toFixed(1)}%)<br>
+                        Families Yet to Adopt: ${item.TotalFamiliesYetToAdopt || 0}<br>
+                        Margadarsi Mobilized: ${item.TotalMargadarsiMobilized || 0}
                     `);
                 }
             });
