@@ -3,663 +3,500 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Constituency Data Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Tholeru Jnanabhumi Verification Status 2025</title>
+    <!-- Google Fonts for a futuristic look -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js for beautiful charts -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css">
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
         :root {
-            --primary: #4361ee;
-            --secondary: #3f37c9;
-            --accent: #4895ef;
-            --dark: #1b263b;
-            --light: #f8f9fa;
-            --success: #4cc9f0;
-            --warning: #f72585;
-            --info: #560bad;
+            --primary-bg-start: #f5f7fa;
+            --primary-bg-end: #c3cfe2;
+            --container-bg: rgba(255, 255, 255, 0.5);
+            --border-color: rgba(255, 255, 255, 0.25);
+            --header-text: #0a192f;
+            --body-text: #5c6a82;
+            --accent: rgb(0, 221, 255);
+            --green: rgb(0, 255, 132);
+            --red: rgb(255, 83, 83);
+            --yellow: rgb(255, 225, 0);
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
+            --border-radius: 16px;
         }
-        
-        body {
-            font-family: 'Inter', sans-serif;
+
+        * {
             margin: 0;
             padding: 0;
-            background-color: #f5f7fa;
-            color: #333;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background-image: linear-gradient(135deg, var(--primary-bg-start) 0%, var(--primary-bg-end) 100%);
+            color: var(--body-text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            color: var(--header-text);
+            font-weight: 700;
+            text-shadow: 0 0 15px rgba(0, 221, 255, 0.3);
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
         }
         
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        /* Frosted Glass Effect for cards */
+        .card, .chart-card, .table-container {
+            background: var(--container-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card {
+            padding: 25px;
+        }
+        
+        .card:hover, .chart-card:hover, .table-container:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--body-text);
+        }
+
+        .card-value {
+            font-size: 2.8rem;
+            font-weight: 700;
+            margin-top: 10px;
+            letter-spacing: -1px;
+        }
+
+        #total-students .card-value { color: var(--accent); }
+        #verified-students .card-value { color: var(--green); text-shadow: 0 0 10px rgba(0, 255, 132, 0.5);}
+        #rejected-students .card-value { color: var(--red); text-shadow: 0 0 10px rgba(255, 83, 83, 0.5);}
+        #pending-students .card-value { color: var(--yellow); text-shadow: 0 0 10px rgba(255, 225, 0, 0.5);}
+
+        .chart-container {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        .chart-card {
             padding: 20px;
         }
         
-        header {
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            color: white;
-            padding: 1.5rem 2rem;
-            border-radius: 10px;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        
-        h1 {
-            margin: 0;
-            font-weight: 700;
-            font-size: 2.2rem;
-        }
-        
-        .subtitle {
-            font-weight: 300;
-            opacity: 0.9;
-            margin-top: 0.5rem;
-        }
-        
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 20px;
-        }
-        
-        .card {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
-            padding: 1.5rem;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        }
-        
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        
-        .card-title {
+        .chart-card h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.4rem;
             font-weight: 600;
-            color: var(--dark);
-            font-size: 1.1rem;
-            margin: 0;
+            color: var(--header-text);
         }
-        
-        .map-container {
-            grid-column: span 8;
-            height: 500px;
-        }
-        
-        .summary-stats {
-            grid-column: span 4;
-        }
-        
-        .chart-container {
-            grid-column: span 6;
-            height: 350px;
-            position: relative;
-        }
-        
-        .chart {
-            width: 100%;
-            height: 100%;
-        }
-        
-        .data-table {
-            grid-column: span 12;
+
+        .table-container {
+            grid-column: 1 / -1;
+            padding: 20px;
             overflow-x: auto;
         }
         
-        table {
+        .table-container h2 {
+             text-align: center;
+             margin-bottom: 20px;
+             font-size: 1.4rem;
+             font-weight: 600;
+             color: var(--header-text);
+        }
+
+        #data-table {
             width: 100%;
             border-collapse: collapse;
-        }
-        
-        th, td {
-            padding: 12px 15px;
             text-align: left;
-            border-bottom: 1px solid #eee;
+        }
+
+        #data-table th, #data-table td {
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        #data-table thead th {
+            background-color: transparent;
+            font-weight: 600;
+            color: var(--header-text);
         }
         
-        th {
-            background-color: var(--primary);
-            color: white;
-            font-weight: 500;
+        #data-table tbody tr {
+            transition: background-color 0.2s ease;
+        }
+
+        #data-table tbody tr:hover {
+            background-color: rgba(0, 221, 255, 0.08);
         }
         
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
+        #data-table tbody tr:last-child td {
+            border-bottom: none;
         }
         
-        tr:hover {
-            background-color: #f1f1f1;
-        }
-        
-        .stat-card {
-            display: flex;
-            flex-direction: column;
-            margin-bottom: 1rem;
-        }
-        
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--primary);
-        }
-        
-        .stat-label {
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 600;
+            color: #0a192f;
+            text-align: center;
+            display: inline-block;
+            min-width: 90px;
             font-size: 0.9rem;
-            color: #666;
+            border: 1px solid rgba(0,0,0,0.1);
         }
-        
-        .progress-container {
-            width: 100%;
-            background-color: #e0e0e0;
-            border-radius: 5px;
-            margin-top: 0.5rem;
+
+        .status-verified { background-color: var(--green); }
+        .status-rejected { background-color: var(--red); }
+        .status-pending { background-color: var(--yellow); }
+        .status-default { background-color: #b0bec5; }
+
+        .loader-container {
+            text-align: center;
+            padding: 50px;
+            grid-column: 1 / -1;
         }
-        
-        .progress-bar {
-            height: 8px;
-            border-radius: 5px;
-            background: linear-gradient(90deg, var(--accent), var(--success));
-        }
-        
-        .filter-controls {
-            grid-column: span 12;
-            display: flex;
-            gap: 15px;
-            margin-bottom: 1rem;
-        }
-        
-        select {
-            padding: 10px 15px;
-            border-radius: 5px;
-            border: 1px solid #ddd;
-            background-color: white;
-            font-family: 'Inter', sans-serif;
-            min-width: 200px;
-        }
-        
-        .legend {
-            display: flex;
-            gap: 15px;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-        
-        .legend-item {
-            display: flex;
-            align-items: center;
-            font-size: 0.8rem;
-        }
-        
-        .legend-color {
-            width: 15px;
-            height: 15px;
-            border-radius: 3px;
-            margin-right: 5px;
-        }
-        
-        @media (max-width: 1200px) {
-            .dashboard-grid {
+
+        @media (max-width: 992px) {
+            header h1 {
+                font-size: 2.2rem;
+            }
+            .chart-container {
                 grid-template-columns: 1fr;
             }
-            
-            .map-container, .summary-stats, .chart-container {
-                grid-column: span 1;
+        }
+        
+        @media (max-width: 576px) {
+            .container {
+                padding: 10px;
+            }
+            header h1 {
+                font-size: 1.6rem;
+            }
+            .card {
+                padding: 20px;
+            }
+            .card-value {
+                font-size: 2.2rem;
+            }
+            .dashboard {
+                gap: 15px;
             }
         }
     </style>
 </head>
 <body>
+
     <div class="container">
         <header>
-            <h1>Constituency Data Dashboard</h1>
-            <div class="subtitle">Interactive visualization of family adoption and coverage metrics</div>
+            <h1>THOLERU JNANABHUMI SIX STEP VERIFICATION STATUS 2025</h1>
         </header>
-        
-        <div class="filter-controls">
-            <select id="constituencyFilter">
-                <option value="">All Constituencies</option>
-            </select>
-        </div>
-        
-        <div class="dashboard-grid">
-            <div class="card map-container">
-                <div class="card-header">
-                    <h2 class="card-title">Geographical Coverage</h2>
-                </div>
-                <div id="map" style="height: 100%; border-radius: 8px;"></div>
-                <div class="legend">
-                    <div class="legend-item">
-                        <div class="legend-color" style="background-color: #4cc9f0;"></div>
-                        <span>High Adoption</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background-color: #4895ef;"></div>
-                        <span>Medium Adoption</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background-color: #4361ee;"></div>
-                        <span>Low Adoption</span>
-                    </div>
-                </div>
+
+        <main class="dashboard">
+            <!-- Summary cards -->
+            <div id="total-students" class="card">
+                <div class="card-title">Total Students</div>
+                <div class="card-value">0</div>
+            </div>
+            <div id="verified-students" class="card">
+                <div class="card-title">Verified Eligible</div>
+                <div class="card-value">0</div>
+            </div>
+            <div id="rejected-students" class="card">
+                <div class="card-title">Not Verified</div>
+                <div class="card-value">0</div>
+            </div>
+            <div id="pending-students" class="card">
+                <div class="card-title">Pending</div>
+                <div class="card-value">0</div>
             </div>
             
-            <div class="card summary-stats">
-                <div class="card-header">
-                    <h2 class="card-title">Family Adoption Statistics</h2>
+            <!-- Charts -->
+            <div class="chart-container">
+                <div class="chart-card">
+                    <h2>Verification Status Breakdown</h2>
+                    <canvas id="statusChart"></canvas>
                 </div>
-                <div class="stat-card">
-                    <span class="stat-value" id="totalFamilies">0</span>
-                    <span class="stat-label">Total Families</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-value" id="totalFamilyMembers">0</span>
-                    <span class="stat-label">Total Family Members</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-value" id="totalAdopted">0</span>
-                    <span class="stat-label">Adopted Families</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-value" id="familiesYetToAdopt">0</span>
-                    <span class="stat-label">Families Yet to Adopt</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-value" id="totalMargadarsi">0</span>
-                    <span class="stat-label">Margadarsi Mobilized</span>
-                </div>
-                <div class="stat-card">
-                    <span class="stat-value" id="adoptionRate">0%</span>
-                    <span class="stat-label">Family Adoption Rate</span>
-                    <div class="progress-container">
-                        <div class="progress-bar" id="adoptionProgress" style="width: 0%"></div>
-                    </div>
+                 <div class="chart-card">
+                    <h2>Students by Course Year</h2>
+                    <canvas id="courseYearChart"></canvas>
                 </div>
             </div>
-            
-            <div class="card chart-container">
-                <div class="card-header">
-                    <h2 class="card-title">Family Adoption Status</h2>
-                </div>
-                <div id="adoptionPieChart" class="chart"></div>
-            </div>
-            
-            <div class="card chart-container">
-                <div class="card-header">
-                    <h2 class="card-title">Margadarsi Mobilization</h2>
-                </div>
-                <div id="margadarsiChart" class="chart"></div>
-            </div>
-            
-            <div class="card data-table">
-                <div class="card-header">
-                    <h2 class="card-title">Detailed Constituency Data</h2>
-                </div>
-                <table id="dataTable">
+
+            <!-- Data Table -->
+            <div class="table-container">
+                 <h2>Student Details</h2>
+                <table id="data-table">
                     <thead>
-                        <tr>
-                            <th>Constituency Name</th>
-                            <th>Total Families</th>
-                            <th>Family Members</th>
-                            <th>Adopted Families</th>
-                            <th>Families Yet to Adopt</th>
-                            <th>Margadarsi Mobilized</th>
-                            <th>Adoption Rate</th>
-                        </tr>
+                        <tr id="table-header"></tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody id="table-body"></tbody>
                 </table>
             </div>
-        </div>
+            
+            <div class="loader-container" id="loader">
+                <p>Loading data from Google Sheet...</p>
+            </div>
+        </main>
     </div>
 
     <script>
-        // Configuration
-        const googleSheetId = '1Gd2drYqcQDF4E-XyXW7Q4ceTQ1PjCbOizkg2kTVZTvQ'; // Replace with your Google Sheet ID
-        const sheetName = 'Drilldown Data'; // Replace with your sheet name
-        const sheetUrl = `https://docs.google.com/spreadsheets/d/${googleSheetId}/gviz/tq?tqx=out:csv&sheet=${sheetName}`;
-        
-        // Coordinates for the constituencies (you'll need to replace these with actual coordinates)
-        const constituencyCoordinates = {
-            "Achanta": { lat: 16.5833, lng: 81.7833 },
-            "Bhimavaram": { lat: 16.5408, lng: 81.5239 },
-            "Narasapuram": { lat: 16.4333, lng: 81.6833 },
-            "Palacole": { lat: 16.5333, lng: 81.7333 },
-            "Tadepalligudem": { lat: 16.8333, lng: 81.5000 },
-            "Tanuku": { lat: 16.7500, lng: 81.7000 },
-            "Undi": { lat: 16.6167, lng: 81.6167 },
-            "Ungutur": { lat: 16.7000, lng: 81.4667 }
-        };
-        
-        // Initialize map
-        const map = L.map('map').setView([16.5, 81.0], 8);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(map);
-        
-        // Chart instances
-        let adoptionPieChart;
-        let margadarsiChart;
-        
-        // Fetch data from Google Sheets
-        async function fetchData() {
-            try {
-                const response = await fetch(sheetUrl);
-                const csvData = await response.text();
-                const data = parseCSV(csvData);
-                processData(data);
-            } catch (error) {
-                console.error('Error fetching data:', error);
+        document.addEventListener('DOMContentLoaded', function() {
+            // !!! IMPORTANT !!!
+            // 1. Go to your Google Sheet.
+            // 2. Click `File` > `Share` > `Publish to web`.
+            // 3. Choose `Sheet1` and `Comma-separated values (.csv)`.
+            // 4. Click `Publish` and copy the new URL here.
+            const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ9PaJF0CBJXeWnqSwSzzi7THl3WBwEFRPHSfNufXEdL6l1ltA9W0BgjoI3aN1oWzSF8PuaU73_BfoG/pub?output=csv'; 
+
+            const loader = document.getElementById('loader');
+
+            if (!googleSheetUrl || googleSheetUrl.includes('PASTE_YOUR_PUBLISHED')) {
+                loader.innerHTML = `<p style="color: var(--red); font-weight: bold;">Error: Please follow the instructions in the code to publish your Google Sheet and paste the correct CSV URL.</p>`;
+                return;
             }
-        }
-        
-        // Parse CSV data
-        function parseCSV(csv) {
-            const lines = csv.split('\n');
-            const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
-            const result = [];
-            
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i]) continue;
-                const obj = {};
-                const currentline = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-                
-                for (let j = 0; j < headers.length; j++) {
-                    let value = currentline[j] ? currentline[j].trim().replace(/"/g, '') : '';
-                    // Convert numeric values
-                    if (!isNaN(value) && value !== '') {
-                        value = Number(value);
+
+            // Function to fetch and parse CSV data
+            async function fetchData(url) {
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error(`Network response was not ok: ${response.statusText}`);
                     }
-                    obj[headers[j]] = value;
+                    const csvText = await response.text();
+                    return parseCSV(csvText);
+                } catch (error) {
+                    console.error("Failed to fetch or parse data:", error);
+                    loader.innerHTML = `<p style="color: var(--red); font-weight: bold;">Failed to load data. Please check the URL and ensure your sheet is published correctly. Check the console for more details.</p>`;
+                    return [];
                 }
-                result.push(obj);
             }
-            
-            return result;
-        }
-        
-        // Process and visualize data
-        function processData(data) {
-            if (!data || data.length === 0) return;
-            
-            // Update filters
-            updateFilters(data);
-            
-            // Calculate summary statistics
-            calculateSummary(data);
-            
-            // Render charts
-            renderCharts(data);
-            
-            // Render table
-            renderTable(data);
-            
-            // Render map
-            renderMap(data);
-        }
-        
-        // Update filter dropdowns
-        function updateFilters(data) {
-            const constituencyFilter = document.getElementById('constituencyFilter');
-            
-            // Get unique constituencies
-            const constituencies = [...new Set(data.map(item => item.ConstituencyName))];
-            
-            // Clear existing options except the first one
-            while (constituencyFilter.options.length > 1) {
-                constituencyFilter.remove(1);
+
+            // Simple CSV parser
+            function parseCSV(text) {
+                const lines = text.split(/\r?\n/);
+                const headers = lines[0].split(',').map(h => h.trim());
+                const data = [];
+                for (let i = 1; i < lines.length; i++) {
+                    if (!lines[i]) continue;
+                    const values = lines[i].split(',');
+                    const entry = {};
+                    headers.forEach((header, index) => {
+                        entry[header] = values[index] ? values[index].trim() : '';
+                    });
+                    data.push(entry);
+                }
+                return data;
             }
-            
-            // Populate constituency filter
-            constituencies.forEach(constituency => {
-                const option = document.createElement('option');
-                option.value = constituency;
-                option.textContent = constituency;
-                constituencyFilter.appendChild(option);
-            });
-            
-            // Add event listener for filtering
-            constituencyFilter.addEventListener('change', () => filterData(data));
-        }
-        
-        // Filter data based on selections
-        function filterData(data) {
-            const constituencyFilter = document.getElementById('constituencyFilter').value;
-            
-            let filteredData = [...data];
-            
-            if (constituencyFilter) {
-                filteredData = filteredData.filter(item => item.ConstituencyName === constituencyFilter);
-            }
-            
-            // Re-render visualizations with filtered data
-            calculateSummary(filteredData);
-            renderCharts(filteredData);
-            renderTable(filteredData);
-            renderMap(filteredData);
-        }
-        
-        // Calculate and display summary statistics
-        function calculateSummary(data) {
-            const totalFamilies = data.reduce((sum, item) => sum + (item.TotalFamilies || 0), 0);
-            const totalFamilyMembers = data.reduce((sum, item) => sum + (item.TotalFamilyMembers || 0), 0);
-            const totalAdopted = data.reduce((sum, item) => sum + (item.TotalAdopted || 0), 0);
-            const familiesYetToAdopt = data.reduce((sum, item) => sum + (item.TotalFamiliesYetToAdopt || 0), 0);
-            const totalMargadarsi = data.reduce((sum, item) => sum + (item.TotalMargadarsiMobilized || 0), 0);
-            
-            // Update DOM elements
-            document.getElementById('totalFamilies').textContent = totalFamilies.toLocaleString();
-            document.getElementById('totalFamilyMembers').textContent = totalFamilyMembers.toLocaleString();
-            document.getElementById('totalAdopted').textContent = totalAdopted.toLocaleString();
-            document.getElementById('familiesYetToAdopt').textContent = familiesYetToAdopt.toLocaleString();
-            document.getElementById('totalMargadarsi').textContent = totalMargadarsi.toLocaleString();
-            
-            // Calculate adoption rate
-            const adoptionRate = totalFamilies > 0 ? (totalAdopted / totalFamilies) * 100 : 0;
-            document.getElementById('adoptionRate').textContent = `${adoptionRate.toFixed(1)}%`;
-            document.getElementById('adoptionProgress').style.width = `${adoptionRate}%`;
-        }
-        
-        // Render charts
-        function renderCharts(data) {
-            // Destroy existing charts if they exist
-            if (adoptionPieChart) {
-                adoptionPieChart.destroy();
-            }
-            if (margadarsiChart) {
-                margadarsiChart.destroy();
-            }
-            
-            // Prepare data for charts
-            const constituencies = data.map(item => item.ConstituencyName);
-            
-            // Family Adoption Pie Chart
-            adoptionPieChart = new ApexCharts(document.querySelector("#adoptionPieChart"), {
-                series: [
-                    data.reduce((sum, item) => sum + (item.TotalAdopted || 0), 0),
-                    data.reduce((sum, item) => sum + (item.TotalFamiliesYetToAdopt || 0), 0)
-                ],
-                chart: {
-                    type: 'donut',
-                    height: 350
-                },
-                labels: ['Adopted Families', 'Families Yet to Adopt'],
-                colors: ['#4cc9f0', '#4361ee'],
-                responsive: [{
-                    breakpoint: 480,
-                    options: {
-                        chart: {
-                            width: 200
-                        },
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }],
-                legend: {
-                    position: 'right'
-                },
-                plotOptions: {
-                    pie: {
-                        donut: {
-                            labels: {
-                                show: true,
-                                total: {
-                                    show: true,
-                                    label: 'Total Families',
-                                    formatter: function (w) {
-                                        return w.globals.seriesTotals.reduce((a, b) => a + b, 0).toLocaleString();
-                                    }
+
+            // Function to render the main data table
+            function renderTable(data, headers) {
+                const tableHeader = document.getElementById('table-header');
+                const tableBody = document.getElementById('table-body');
+                tableHeader.innerHTML = '';
+                tableBody.innerHTML = '';
+
+                headers.forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    tableHeader.appendChild(th);
+                });
+
+                data.forEach((row, index) => {
+                    const tr = document.createElement('tr');
+                    headers.forEach(header => {
+                        const td = document.createElement('td');
+
+                        // Check for S.No. column specifically to re-calculate it after sorting
+                        if (header.trim().toLowerCase() === 's.no.') {
+                            td.textContent = index + 1;
+                        } else {
+                            const cellValue = row[header] || '';
+                            const lowerCaseHeader = header.toLowerCase();
+                            
+                            if (lowerCaseHeader === 'status') {
+                                const status = cellValue.toLowerCase();
+                                const badge = document.createElement('span');
+                                badge.textContent = cellValue;
+                                badge.classList.add('status-badge');
+                                if (status === 'verified eligible') {
+                                    badge.classList.add('status-verified');
+                                } else if (status === 'not verified') {
+                                    badge.classList.add('status-rejected');
+                                } else if (status.includes('pending')) {
+                                    badge.classList.add('status-pending');
+                                } else {
+                                    badge.classList.add('status-default');
                                 }
+                                td.appendChild(badge);
+                            } else if (lowerCaseHeader === 'student mobile number' || lowerCaseHeader === 'parent mobile number') {
+                                const trimmedValue = cellValue.trim();
+                                // Mask the number if it's 10 digits
+                                if (trimmedValue && /^\d{10}$/.test(trimmedValue)) {
+                                    td.textContent = 'xxxxxx' + trimmedValue.slice(-4);
+                                } else {
+                                    td.textContent = cellValue; // Show original value if not a 10-digit number
+                                }
+                            } else {
+                                td.textContent = cellValue;
                             }
                         }
-                    }
-                }
-            });
-            adoptionPieChart.render();
-            
-            // Margadarsi Mobilization Chart
-            margadarsiChart = new ApexCharts(document.querySelector("#margadarsiChart"), {
-                series: [{
-                    name: 'Margadarsi Mobilized',
-                    data: data.map(item => item.TotalMargadarsiMobilized || 0)
-                }],
-                chart: {
-                    type: 'bar',
-                    height: 350,
-                    toolbar: {
-                        show: true
-                    }
-                },
-                plotOptions: {
-                    bar: {
-                        borderRadius: 4,
-                        horizontal: true,
-                    }
-                },
-                dataLabels: {
-                    enabled: false
-                },
-                colors: ['#560bad'],
-                xaxis: {
-                    categories: constituencies,
-                    labels: {
-                        style: {
-                            fontSize: '12px'
-                        }
-                    }
-                },
-                yaxis: {
-                    title: {
-                        text: 'Constituencies'
-                    }
-                },
-                tooltip: {
-                    y: {
-                        formatter: function (val) {
-                            return val.toLocaleString();
-                        }
-                    }
-                }
-            });
-            margadarsiChart.render();
-        }
-        
-        // Render data table
-        function renderTable(data) {
-            const tableBody = document.querySelector('#dataTable tbody');
-            tableBody.innerHTML = '';
-            
-            data.forEach(item => {
-                const adoptionRate = item.TotalFamilies > 0 ? 
-                    ((item.TotalAdopted || 0) / item.TotalFamilies * 100).toFixed(1) + '%' : '0%';
-                
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${item.ConstituencyName || ''}</td>
-                    <td>${item.TotalFamilies || 0}</td>
-                    <td>${item.TotalFamilyMembers || 0}</td>
-                    <td>${item.TotalAdopted || 0}</td>
-                    <td>${item.TotalFamiliesYetToAdopt || 0}</td>
-                    <td>${item.TotalMargadarsiMobilized || 0}</td>
-                    <td>${adoptionRate}</td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-        
-        // Render map with markers
-        function renderMap(data) {
-            // Clear existing markers
-            map.eachLayer(layer => {
-                if (layer instanceof L.Marker) {
-                    map.removeLayer(layer);
-                }
-            });
-            
-            // Add markers for each constituency
-            data.forEach(item => {
-                const constituency = item.ConstituencyName;
-                const coords = constituencyCoordinates[constituency];
-                
-                if (coords) {
-                    const adoptionRate = item.TotalFamilies > 0 ? 
-                        (item.TotalAdopted || 0) / item.TotalFamilies : 0;
-                    
-                    // Determine color based on adoption rate
-                    let color;
-                    if (adoptionRate >= 0.7) color = '#4cc9f0'; // High adoption
-                    else if (adoptionRate >= 0.4) color = '#4895ef'; // Medium adoption
-                    else color = '#4361ee'; // Low adoption
-                    
-                    // Create custom marker icon
-                    const icon = L.divIcon({
-                        className: 'custom-marker',
-                        html: `<svg viewBox="0 0 24 24" width="24" height="24" fill="${color}" stroke="#fff" stroke-width="2">
-                                  <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                              </svg>`,
-                        iconSize: [24, 24],
-                        iconAnchor: [12, 24],
-                        popupAnchor: [0, -24]
+                        tr.appendChild(td);
                     });
-                    
-                    // Create marker with popup
-                    const marker = L.marker([coords.lat, coords.lng], { icon });
-                    marker.addTo(map);
-                    
-                    // Add popup with constituency info
-                    marker.bindPopup(`
-                        <b>${constituency}</b><br>
-                        Total Families: ${item.TotalFamilies || 0}<br>
-                        Adopted Families: ${item.TotalAdopted || 0} (${(adoptionRate * 100).toFixed(1)}%)<br>
-                        Families Yet to Adopt: ${item.TotalFamiliesYetToAdopt || 0}<br>
-                        Margadarsi Mobilized: ${item.TotalMargadarsiMobilized || 0}
-                    `);
-                }
-            });
-            
-            // Fit map to bounds if there are markers
-            if (data.length > 0 && data.some(item => constituencyCoordinates[item.ConstituencyName])) {
-                const markers = data
-                    .filter(item => constituencyCoordinates[item.ConstituencyName])
-                    .map(item => {
-                        const coords = constituencyCoordinates[item.ConstituencyName];
-                        return [coords.lat, coords.lng];
-                    });
-                
-                map.fitBounds(markers);
+                    tableBody.appendChild(tr);
+                });
             }
-        }
-        
-        // Initialize the dashboard
-        document.addEventListener('DOMContentLoaded', fetchData);
+
+            // Function to update summary cards
+            function updateSummaryCards(data) {
+                const total = data.length;
+                const verified = data.filter(row => row.Status && row.Status.toLowerCase() === 'verified eligible').length;
+                const rejected = data.filter(row => row.Status && row.Status.toLowerCase() === 'not verified').length;
+                const pending = data.filter(row => row.Status && row.Status.toLowerCase().includes('pending')).length;
+
+                document.querySelector('#total-students .card-value').textContent = total;
+                document.querySelector('#verified-students .card-value').textContent = verified;
+                document.querySelector('#rejected-students .card-value').textContent = rejected;
+                document.querySelector('#pending-students .card-value').textContent = pending;
+            }
+            
+            // Function to create charts
+            function createCharts(data) {
+                const statusCounts = data.reduce((acc, row) => {
+                    let status = (row.Status || 'Unknown').toLowerCase();
+                    if (status === 'verified eligible') status = 'Verified Eligible';
+                    else if (status === 'not verified') status = 'Not Verified';
+                    else if (status.includes('pending')) status = 'Pending';
+                    else status = 'Other';
+                    
+                    acc[status] = (acc[status] || 0) + 1;
+                    return acc;
+                }, {});
+
+                const statusCtx = document.getElementById('statusChart').getContext('2d');
+                new Chart(statusCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(statusCounts),
+                        datasets: [{
+                            label: 'Verification Status',
+                            data: Object.values(statusCounts),
+                            backgroundColor: [
+                                'rgba(0, 255, 132, 0.8)', // green
+                                'rgba(255, 83, 83, 0.8)', // red
+                                'rgba(255, 225, 0, 0.8)', // yellow
+                                'rgba(108, 117, 125, 0.8)'
+                            ],
+                            borderColor: 'rgba(245, 247, 250, 0.8)',
+                            borderWidth: 4,
+                            hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { position: 'top', labels: { color: 'var(--body-text)', font: { size: 14 } } } }
+                    }
+                });
+                
+                const yearCounts = data.reduce((acc, row) => {
+                    const year = row['Course Year'] || 'N/A';
+                    acc[year] = (acc[year] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                const sortedYears = Object.keys(yearCounts).sort();
+
+                const yearCtx = document.getElementById('courseYearChart').getContext('2d');
+                new Chart(yearCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: sortedYears,
+                        datasets: [{
+                            label: 'Number of Students',
+                            data: sortedYears.map(year => yearCounts[year]),
+                            backgroundColor: 'rgba(0, 221, 255, 0.6)',
+                            borderColor: 'rgba(0, 221, 255, 1)',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            hoverBackgroundColor: 'rgba(0, 221, 255, 0.8)'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: false } },
+                        scales: { 
+                            y: { beginAtZero: true, grid: { color: 'rgba(136, 146, 176, 0.1)'}, ticks: { color: 'var(--body-text)' } },
+                            x: { grid: { display: false }, ticks: { color: 'var(--body-text)' } }
+                        }
+                    }
+                });
+            }
+
+            // Main function to initialize the dashboard
+            async function init() {
+                const data = await fetchData(googleSheetUrl);
+                loader.style.display = 'none';
+
+                if (data && data.length > 0) {
+                    // Sort data to show "Not Verified" first
+                    data.sort((a, b) => {
+                        const statusA = (a.Status || '').toLowerCase();
+                        const statusB = (b.Status || '').toLowerCase();
+                        if (statusA === 'not verified' && statusB !== 'not verified') {
+                            return -1; // a comes first
+                        }
+                        if (statusA !== 'not verified' && statusB === 'not verified') {
+                            return 1; // b comes first
+                        }
+                        return 0; // no change in order for other items
+                    });
+
+                    const headers = Object.keys(data[0]);
+                    renderTable(data, headers);
+                    updateSummaryCards(data);
+                    createCharts(data);
+                } else {
+                    if (!loader.textContent.includes('Error')) {
+                       loader.style.display = 'block';
+                       loader.innerHTML = `<p>No data found in the sheet or failed to load.</p>`;
+                    }
+                }
+            }
+
+            init();
+        });
     </script>
 </body>
 </html>
+
+
