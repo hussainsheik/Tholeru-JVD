@@ -4,26 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tholeru Jnanabhumi Verification Status 2025</title>
-    <!-- Google Fonts for a futuristic look -->
+    <!-- Google Fonts for a modern, elegant look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Chart.js for beautiful charts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icon Library for search icon -->
+    <script src="https://unpkg.com/feather-icons"></script>
     <style>
         :root {
-            --primary-bg-start: #f5f7fa;
-            --primary-bg-end: #c3cfe2;
-            --container-bg: rgba(255, 255, 255, 0.5);
-            --border-color: rgba(255, 255, 255, 0.25);
-            --header-text: #0a192f;
+            --primary-bg-start: #f8f9ff;
+            --primary-bg-end: #e0eaff;
+            --container-bg: rgba(255, 255, 255, 0.6);
+            --border-color: rgba(224, 234, 255, 0.7);
+            --header-text: #1d2b48;
             --body-text: #5c6a82;
-            --accent: rgb(0, 221, 255);
-            --green: rgb(0, 255, 132);
-            --red: rgb(255, 83, 83);
-            --yellow: rgb(255, 225, 0);
-            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
-            --border-radius: 16px;
+            --accent: #6c63ff;
+            --green: #10b981;
+            --red: #ef4444;
+            --yellow: #f59e0b;
+            --shadow: 0 10px 30px rgba(0, 0, 0, 0.07);
+            --shadow-hover: 0 15px 40px rgba(0, 0, 0, 0.1);
+            --border-radius: 20px;
         }
 
         * {
@@ -33,55 +34,58 @@
         }
 
         body {
-            font-family: 'Exo 2', sans-serif;
+            font-family: 'Poppins', sans-serif;
             background-image: linear-gradient(135deg, var(--primary-bg-start) 0%, var(--primary-bg-end) 100%);
             color: var(--body-text);
-            line-height: 1.6;
+            line-height: 1.7;
             min-height: 100vh;
         }
 
         .container {
             max-width: 1600px;
-            margin: 20px auto;
+            margin: 40px auto;
             padding: 20px;
         }
 
         header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 60px;
         }
 
         header h1 {
-            font-size: 2.8rem;
+            font-size: 3.2rem;
             color: var(--header-text);
             font-weight: 700;
-            text-shadow: 0 0 15px rgba(0, 221, 255, 0.3);
+            letter-spacing: -1.5px;
+            background: linear-gradient(45deg, var(--accent), #4a42e4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         .dashboard {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
         }
         
-        /* Frosted Glass Effect for cards */
-        .card, .chart-card, .table-container {
+        /* Glassmorphism Effect for cards */
+        .card, .table-wrapper {
             background: var(--container-bg);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
             border-radius: var(--border-radius);
             border: 1px solid var(--border-color);
             box-shadow: var(--shadow);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
 
         .card {
-            padding: 25px;
+            padding: 30px;
         }
         
-        .card:hover, .chart-card:hover, .table-container:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.15);
+        .card:hover, .table-wrapper:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: var(--shadow-hover);
         }
 
         .card-title {
@@ -91,65 +95,77 @@
         }
 
         .card-value {
-            font-size: 2.8rem;
-            font-weight: 700;
+            font-size: 3rem;
+            font-weight: 600;
             margin-top: 10px;
-            letter-spacing: -1px;
         }
 
         #total-students .card-value { color: var(--accent); }
-        #verified-students .card-value { color: var(--green); text-shadow: 0 0 10px rgba(0, 255, 132, 0.5);}
-        #rejected-students .card-value { color: var(--red); text-shadow: 0 0 10px rgba(255, 83, 83, 0.5);}
-        #pending-students .card-value { color: var(--yellow); text-shadow: 0 0 10px rgba(255, 225, 0, 0.5);}
+        #verified-students .card-value { color: var(--green); }
+        #rejected-students .card-value { color: var(--red); }
+        #pending-students .card-value { color: var(--yellow); }
 
-        .chart-container {
+        .table-controls {
             grid-column: 1 / -1;
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 25px;
-        }
-        
-        .chart-card {
-            padding: 20px;
-        }
-        
-        .chart-card h2 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: var(--header-text);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
         }
 
-        .table-container {
+        .search-wrapper {
+            position: relative;
+        }
+
+        .search-wrapper i {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--body-text);
+        }
+        
+        #search-input {
+            width: 300px;
+            padding: 12px 18px 12px 50px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background-color: rgba(255, 255, 255, 0.8);
+            font-family: 'Poppins', sans-serif;
+            font-size: 1rem;
+            transition: all 0.2s ease-in-out;
+        }
+        #search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px var(--accent);
+            border-color: var(--accent);
+        }
+        
+        .table-wrapper {
             grid-column: 1 / -1;
-            padding: 20px;
+            padding: 25px;
             overflow-x: auto;
-        }
-        
-        .table-container h2 {
-             text-align: center;
-             margin-bottom: 20px;
-             font-size: 1.4rem;
-             font-weight: 600;
-             color: var(--header-text);
         }
 
         #data-table {
             width: 100%;
             border-collapse: collapse;
             text-align: left;
+            border: 1px solid var(--border-color);
         }
 
         #data-table th, #data-table td {
-            padding: 14px 18px;
-            border-bottom: 1px solid var(--border-color);
+            padding: 18px 22px;
+            border: 1px solid var(--border-color);
         }
 
         #data-table thead th {
-            background-color: transparent;
             font-weight: 600;
             color: var(--header-text);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background-color: rgba(245, 158, 11, 0.15);
         }
         
         #data-table tbody tr {
@@ -157,7 +173,21 @@
         }
 
         #data-table tbody tr:hover {
-            background-color: rgba(0, 221, 255, 0.08);
+            background-color: rgba(108, 99, 255, 0.05);
+        }
+        
+        #data-table tbody tr.row-verified {
+            background-color: rgba(16, 185, 129, 0.1);
+        }
+        #data-table tbody tr.row-verified:hover {
+            background-color: rgba(16, 185, 129, 0.2);
+        }
+
+        #data-table tbody tr.row-rejected {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+        #data-table tbody tr.row-rejected:hover {
+            background-color: rgba(239, 68, 68, 0.2);
         }
         
         #data-table tbody tr:last-child td {
@@ -165,52 +195,54 @@
         }
         
         .status-badge {
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-weight: 600;
-            color: #0a192f;
-            text-align: center;
-            display: inline-block;
-            min-width: 90px;
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-weight: 500;
             font-size: 0.9rem;
-            border: 1px solid rgba(0,0,0,0.1);
+            color: #fff;
         }
 
         .status-verified { background-color: var(--green); }
         .status-rejected { background-color: var(--red); }
         .status-pending { background-color: var(--yellow); }
-        .status-default { background-color: #b0bec5; }
+        .status-default { background-color: #94a3b8; }
 
         .loader-container {
             text-align: center;
-            padding: 50px;
+            padding: 60px;
             grid-column: 1 / -1;
         }
 
-        @media (max-width: 992px) {
+        @media (max-width: 768px) {
             header h1 {
-                font-size: 2.2rem;
+                font-size: 2.5rem;
             }
-            .chart-container {
-                grid-template-columns: 1fr;
+            .table-controls {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 20px;
+            }
+            #search-input {
+                width: 100%;
             }
         }
         
         @media (max-width: 576px) {
             .container {
-                padding: 10px;
+                padding: 15px;
+                margin: 20px auto;
             }
             header h1 {
-                font-size: 1.6rem;
+                font-size: 1.8rem;
             }
             .card {
                 padding: 20px;
             }
             .card-value {
-                font-size: 2.2rem;
+                font-size: 2.5rem;
             }
             .dashboard {
-                gap: 15px;
+                gap: 20px;
             }
         }
     </style>
@@ -219,11 +251,10 @@
 
     <div class="container">
         <header>
-            <h1>THOLERU JNANABHUMI SIX STEP VERIFICATION STATUS 2025</h1>
+            <h1>THOLERU JNANABHUMI STATUS 2025</h1>
         </header>
 
         <main class="dashboard">
-            <!-- Summary cards -->
             <div id="total-students" class="card">
                 <div class="card-title">Total Students</div>
                 <div class="card-value">0</div>
@@ -241,21 +272,14 @@
                 <div class="card-value">0</div>
             </div>
             
-            <!-- Charts -->
-            <div class="chart-container">
-                <div class="chart-card">
-                    <h2>Verification Status Breakdown</h2>
-                    <canvas id="statusChart"></canvas>
-                </div>
-                 <div class="chart-card">
-                    <h2>Students by Course Year</h2>
-                    <canvas id="courseYearChart"></canvas>
+            <div class="table-controls">
+                <div class="search-wrapper">
+                    <i data-feather="search"></i>
+                    <input type="text" id="search-input" placeholder="Search students...">
                 </div>
             </div>
-
-            <!-- Data Table -->
-            <div class="table-container">
-                 <h2>Student Details</h2>
+            
+            <div class="table-wrapper">
                 <table id="data-table">
                     <thead>
                         <tr id="table-header"></tr>
@@ -265,124 +289,107 @@
             </div>
             
             <div class="loader-container" id="loader">
-                <p>Loading data from Google Sheet...</p>
+                <p>Loading student data...</p>
             </div>
         </main>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            // Activate Feather Icons
+            feather.replace();
+
             // !!! IMPORTANT !!!
             // 1. Go to your Google Sheet.
             // 2. Click `File` > `Share` > `Publish to web`.
             // 3. Choose `Sheet1` and `Comma-separated values (.csv)`.
             // 4. Click `Publish` and copy the new URL here.
             const googleSheetUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ9PaJF0CBJXeWnqSwSzzi7THl3WBwEFRPHSfNufXEdL6l1ltA9W0BgjoI3aN1oWzSF8PuaU73_BfoG/pub?output=csv'; 
+            
+            let allStudentData = []; // To store the original data
 
             const loader = document.getElementById('loader');
+            const searchInput = document.getElementById('search-input');
 
             if (!googleSheetUrl || googleSheetUrl.includes('PASTE_YOUR_PUBLISHED')) {
-                loader.innerHTML = `<p style="color: var(--red); font-weight: bold;">Error: Please follow the instructions in the code to publish your Google Sheet and paste the correct CSV URL.</p>`;
+                loader.innerHTML = `<p style="color: var(--red); font-weight: bold;">Error: Please publish your Google Sheet and paste the correct CSV URL in the script.</p>`;
                 return;
             }
 
-            // Function to fetch and parse CSV data
             async function fetchData(url) {
                 try {
                     const response = await fetch(url);
-                    if (!response.ok) {
-                        throw new Error(`Network response was not ok: ${response.statusText}`);
-                    }
+                    if (!response.ok) throw new Error(`Network response error: ${response.statusText}`);
                     const csvText = await response.text();
                     return parseCSV(csvText);
                 } catch (error) {
-                    console.error("Failed to fetch or parse data:", error);
-                    loader.innerHTML = `<p style="color: var(--red); font-weight: bold;">Failed to load data. Please check the URL and ensure your sheet is published correctly. Check the console for more details.</p>`;
+                    console.error("Fetch Error:", error);
+                    loader.innerHTML = `<p style="color: var(--red); font-weight: bold;">Failed to load data. Please check the URL and your sheet's publish settings.</p>`;
                     return [];
                 }
             }
 
-            // Simple CSV parser
             function parseCSV(text) {
-                const lines = text.split(/\r?\n/);
+                const lines = text.split(/\r?\n/).filter(line => line);
+                if (lines.length < 1) return [];
                 const headers = lines[0].split(',').map(h => h.trim());
-                const data = [];
-                for (let i = 1; i < lines.length; i++) {
-                    if (!lines[i]) continue;
-                    const values = lines[i].split(',');
+                return lines.slice(1).map(line => {
+                    const values = line.split(',');
                     const entry = {};
                     headers.forEach((header, index) => {
                         entry[header] = values[index] ? values[index].trim() : '';
                     });
-                    data.push(entry);
-                }
-                return data;
+                    return entry;
+                });
             }
 
-            // Function to render the main data table
-            function renderTable(data, headers) {
+            function renderTable(data) {
+                if (data.length === 0) return;
+                const headers = Object.keys(data[0]);
                 const tableHeader = document.getElementById('table-header');
                 const tableBody = document.getElementById('table-body');
-                tableHeader.innerHTML = '';
-                tableBody.innerHTML = '';
+                tableHeader.innerHTML = headers.map(header => `<th>${header}</th>`).join('');
+                
+                tableBody.innerHTML = data.map((row, index) => {
+                    let rowClass = '';
+                    const status = (row.Status || '').toLowerCase();
+                    if (status === 'verified eligible') {
+                        rowClass = 'row-verified';
+                    } else if (status === 'not verified') {
+                        rowClass = 'row-rejected';
+                    }
 
-                headers.forEach(header => {
-                    const th = document.createElement('th');
-                    th.textContent = header;
-                    tableHeader.appendChild(th);
-                });
+                    const rowHtml = headers.map(header => {
+                        let cellValue = row[header] || '';
+                        const lowerCaseHeader = header.toLowerCase().trim();
 
-                data.forEach((row, index) => {
-                    const tr = document.createElement('tr');
-                    headers.forEach(header => {
-                        const td = document.createElement('td');
-
-                        // Check for S.No. column specifically to re-calculate it after sorting
-                        if (header.trim().toLowerCase() === 's.no.') {
-                            td.textContent = index + 1;
-                        } else {
-                            const cellValue = row[header] || '';
-                            const lowerCaseHeader = header.toLowerCase();
-                            
-                            if (lowerCaseHeader === 'status') {
-                                const status = cellValue.toLowerCase();
-                                const badge = document.createElement('span');
-                                badge.textContent = cellValue;
-                                badge.classList.add('status-badge');
-                                if (status === 'verified eligible') {
-                                    badge.classList.add('status-verified');
-                                } else if (status === 'not verified') {
-                                    badge.classList.add('status-rejected');
-                                } else if (status.includes('pending')) {
-                                    badge.classList.add('status-pending');
-                                } else {
-                                    badge.classList.add('status-default');
-                                }
-                                td.appendChild(badge);
-                            } else if (lowerCaseHeader === 'student mobile number' || lowerCaseHeader === 'parent mobile number') {
-                                const trimmedValue = cellValue.trim();
-                                // Mask the number if it's 10 digits
-                                if (trimmedValue && /^\d{10}$/.test(trimmedValue)) {
-                                    td.textContent = 'xxxxxx' + trimmedValue.slice(-4);
-                                } else {
-                                    td.textContent = cellValue; // Show original value if not a 10-digit number
-                                }
-                            } else {
-                                td.textContent = cellValue;
+                        if (lowerCaseHeader === 's.no.') {
+                            return `<td>${index + 1}</td>`;
+                        }
+                        if (lowerCaseHeader === 'status') {
+                            const status = cellValue.toLowerCase();
+                            let badgeClass = 'status-default';
+                            if (status === 'verified eligible') badgeClass = 'status-verified';
+                            else if (status === 'not verified') badgeClass = 'status-rejected';
+                            else if (status.includes('pending')) badgeClass = 'status-pending';
+                            return `<td><span class="status-badge ${badgeClass}">${cellValue}</span></td>`;
+                        }
+                        if (lowerCaseHeader === 'student mobile number' || lowerCaseHeader === 'parent mobile number') {
+                             if (cellValue && /^\d{10}$/.test(cellValue)) {
+                                cellValue = 'xxxxxx' + cellValue.slice(-4);
                             }
                         }
-                        tr.appendChild(td);
-                    });
-                    tableBody.appendChild(tr);
-                });
+                        return `<td>${cellValue}</td>`;
+                    }).join('');
+                    return `<tr class="${rowClass}">${rowHtml}</tr>`;
+                }).join('');
             }
 
-            // Function to update summary cards
             function updateSummaryCards(data) {
                 const total = data.length;
-                const verified = data.filter(row => row.Status && row.Status.toLowerCase() === 'verified eligible').length;
-                const rejected = data.filter(row => row.Status && row.Status.toLowerCase() === 'not verified').length;
-                const pending = data.filter(row => row.Status && row.Status.toLowerCase().includes('pending')).length;
+                const verified = data.filter(r => r.Status?.toLowerCase() === 'verified eligible').length;
+                const rejected = data.filter(r => r.Status?.toLowerCase() === 'not verified').length;
+                const pending = data.filter(r => r.Status?.toLowerCase().includes('pending')).length;
 
                 document.querySelector('#total-students .card-value').textContent = total;
                 document.querySelector('#verified-students .card-value').textContent = verified;
@@ -390,106 +397,38 @@
                 document.querySelector('#pending-students .card-value').textContent = pending;
             }
             
-            // Function to create charts
-            function createCharts(data) {
-                const statusCounts = data.reduce((acc, row) => {
-                    let status = (row.Status || 'Unknown').toLowerCase();
-                    if (status === 'verified eligible') status = 'Verified Eligible';
-                    else if (status === 'not verified') status = 'Not Verified';
-                    else if (status.includes('pending')) status = 'Pending';
-                    else status = 'Other';
-                    
-                    acc[status] = (acc[status] || 0) + 1;
-                    return acc;
-                }, {});
-
-                const statusCtx = document.getElementById('statusChart').getContext('2d');
-                new Chart(statusCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: Object.keys(statusCounts),
-                        datasets: [{
-                            label: 'Verification Status',
-                            data: Object.values(statusCounts),
-                            backgroundColor: [
-                                'rgba(0, 255, 132, 0.8)', // green
-                                'rgba(255, 83, 83, 0.8)', // red
-                                'rgba(255, 225, 0, 0.8)', // yellow
-                                'rgba(108, 117, 125, 0.8)'
-                            ],
-                            borderColor: 'rgba(245, 247, 250, 0.8)',
-                            borderWidth: 4,
-                            hoverOffset: 8
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { position: 'top', labels: { color: 'var(--body-text)', font: { size: 14 } } } }
-                    }
+            function filterData() {
+                const query = searchInput.value.toLowerCase();
+                const filteredData = allStudentData.filter(row => {
+                    return Object.values(row).some(value => 
+                        String(value).toLowerCase().includes(query)
+                    );
                 });
-                
-                const yearCounts = data.reduce((acc, row) => {
-                    const year = row['Course Year'] || 'N/A';
-                    acc[year] = (acc[year] || 0) + 1;
-                    return acc;
-                }, {});
-                
-                const sortedYears = Object.keys(yearCounts).sort();
-
-                const yearCtx = document.getElementById('courseYearChart').getContext('2d');
-                new Chart(yearCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: sortedYears,
-                        datasets: [{
-                            label: 'Number of Students',
-                            data: sortedYears.map(year => yearCounts[year]),
-                            backgroundColor: 'rgba(0, 221, 255, 0.6)',
-                            borderColor: 'rgba(0, 221, 255, 1)',
-                            borderWidth: 2,
-                            borderRadius: 8,
-                            hoverBackgroundColor: 'rgba(0, 221, 255, 0.8)'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: false } },
-                        scales: { 
-                            y: { beginAtZero: true, grid: { color: 'rgba(136, 146, 176, 0.1)'}, ticks: { color: 'var(--body-text)' } },
-                            x: { grid: { display: false }, ticks: { color: 'var(--body-text)' } }
-                        }
-                    }
-                });
+                renderTable(filteredData);
             }
 
-            // Main function to initialize the dashboard
             async function init() {
                 const data = await fetchData(googleSheetUrl);
-                loader.style.display = 'none';
+                document.querySelector('.loader-container').style.display = 'none';
 
                 if (data && data.length > 0) {
-                    // Sort data to show "Not Verified" first
                     data.sort((a, b) => {
                         const statusA = (a.Status || '').toLowerCase();
                         const statusB = (b.Status || '').toLowerCase();
-                        if (statusA === 'not verified' && statusB !== 'not verified') {
-                            return -1; // a comes first
-                        }
-                        if (statusA !== 'not verified' && statusB === 'not verified') {
-                            return 1; // b comes first
-                        }
-                        return 0; // no change in order for other items
+                        if (statusA === 'not verified' && statusB !== 'not verified') return -1;
+                        if (statusA !== 'not verified' && statusB === 'not verified') return 1;
+                        return 0;
                     });
+                    
+                    allStudentData = data; // Store for filtering
 
-                    const headers = Object.keys(data[0]);
-                    renderTable(data, headers);
+                    renderTable(data);
                     updateSummaryCards(data);
-                    createCharts(data);
+                    
+                    searchInput.addEventListener('input', filterData);
                 } else {
-                    if (!loader.textContent.includes('Error')) {
-                       loader.style.display = 'block';
-                       loader.innerHTML = `<p>No data found in the sheet or failed to load.</p>`;
-                    }
+                   loader.style.display = 'block';
+                   loader.innerHTML = `<p>No data found in the sheet or failed to load.</p>`;
                 }
             }
 
@@ -498,5 +437,7 @@
     </script>
 </body>
 </html>
+
+
 
 
